@@ -1,5 +1,5 @@
 {
-  "name": "Reauction",
+  "name": "reauction-client",
   "version": "0.1.0",
   "type": "module",
   "private": false,
@@ -12,14 +12,12 @@
   },
   "types": "./index.d.ts",
   "scripts": {
-    "dev": "node scripts/dev.js",
     "build": "next build",
+    "dev": "next dev --turbopack",
     "build:raw": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy:vercel": "tsx scripts/deploy.ts",
-    "deploy:raw": "vercel --prod",
-    "cleanup": "node scripts/cleanup.js"
+    "deploy:raw": "vercel --prod"
   },
   "overrides": {
     "chalk": "5.3.0",
