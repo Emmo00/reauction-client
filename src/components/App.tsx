@@ -3,9 +3,15 @@
 import Link from "next/link";
 import FaultyTerminal from "@/components/FaultyTerminal";
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { useEffect } from "react";
+import sdk from "@farcaster/miniapp-sdk";
 
 export default function LandingPage() {
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
   return (
     <>
       <main className="relative min-h-screen overflow-hidden bg-background">

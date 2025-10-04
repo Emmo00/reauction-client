@@ -1,16 +1,28 @@
-import { Grid3x3 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Grid3x3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import sdk from "@farcaster/miniapp-sdk";
+import { MiniAppContext } from "@farcaster/miniapp-core/dist/context";
 
 export function MobileHeader() {
+  const [context, setContext] = useState<MiniAppContext | null>(null);
+
+  useEffect(() => {
+    async function waitForContext() {
+      setContext(await sdk.context);
+    }
+
+    waitForContext();
+  }, []);
   return (
     <div className="flex items-center justify-between px-4 py-4">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 border-2 border-primary">
-          <AvatarImage src="/placeholder.svg?height=40&width=40" />
-          <AvatarFallback>HP</AvatarFallback>
+          <AvatarImage src={context?.user.pfpUrl} />
+          <AvatarFallback>{context?.user.username?.charAt(0) ?? "U"}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-semibold text-foreground">Halo Pamaddog</p>
+          <p className="text-sm font-semibold text-foreground">{context?.user.displayName}</p>
           <p className="text-xs text-muted-foreground">0 Upload</p>
         </div>
       </div>
@@ -18,5 +30,5 @@ export function MobileHeader() {
         {/* <Grid3x3 className="h-5 w-5" /> */}
       </button>
     </div>
-  )
+  );
 }
