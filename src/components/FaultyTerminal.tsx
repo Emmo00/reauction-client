@@ -207,15 +207,22 @@ void main() {
 }
 `;
 
-function hexToRgb(hex) {
-  let h = hex.replace('#', '').trim();
-  if (h.length === 3)
-    h = h
-      .split('')
-      .map(c => c + c)
-      .join('');
-  const num = parseInt(h, 16);
-  return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255];
+interface RgbColor {
+    0: number;
+    1: number;
+    2: number;
+    length: 3;
+}
+
+function hexToRgb(hex: string): RgbColor {
+    let h = hex.replace('#', '').trim();
+    if (h.length === 3)
+        h = h
+            .split('')
+            .map(c => c + c)
+            .join('');
+    const num = parseInt(h, 16);
+    return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255] as RgbColor;
 }
 
 export default function FaultyTerminal({
@@ -237,8 +244,8 @@ export default function FaultyTerminal({
   dpr = Math.min(window.devicePixelRatio || 1, 2),
   pageLoadAnimation = true,
   brightness = 1,
-  className,
-  style,
+  className = "",
+  style = {},
   ...rest
 }) {
   const containerRef = useRef(null);
