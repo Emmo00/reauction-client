@@ -10,6 +10,8 @@ export default function LandingPage() {
         <div className="absolute inset-0">
           <div className="relative h-full w-full opacity-25">
             <FaultyTerminal
+              className=""
+              style={{}}
               scale={1.5}
               gridMul={[2, 1]}
               digitSize={1.2}
