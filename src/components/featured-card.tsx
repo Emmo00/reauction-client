@@ -1,5 +1,6 @@
 import { Heart, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export function FeaturedCard() {
   return (
@@ -16,9 +17,11 @@ export function FeaturedCard() {
           </div>
           <p className="text-xl font-bold text-white">28.04 USDC</p>
         </div>
-        <Button size="sm" className="rounded-full bg-white px-6 text-sm font-semibold text-black hover:bg-white/90">
-          Place Bid
-        </Button>
+        <Link href="/collectible/102" className="cursor-pointer">
+          <Button size="sm" className="cursor-pointer rounded-full bg-white px-6 text-sm font-semibold text-black hover:bg-white/90">
+            Place Bid
+          </Button>
+        </Link>
       </div>
     </div>
   )
