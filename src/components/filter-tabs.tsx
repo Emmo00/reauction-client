@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-const filters = ["All", "Trending", "Art Works", "Collectibles"]
+const filters = ["All", "Auction", "Buy Now"]
 
 export function FilterTabs() {
   const [active, setActive] = useState("All")
