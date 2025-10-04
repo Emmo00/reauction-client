@@ -4,7 +4,6 @@ import { MobileHeader } from "@/components/mobile-header";
 import { SearchBar } from "@/components/search-bar";
 import { FilterTabs } from "@/components/filter-tabs";
 import { FeaturedCard } from "@/components/featured-card";
-import { TopSellersSection } from "@/components/top-sellers-section";
 import { BottomNav } from "@/components/bottom-nav";
 
 export default function HomePage() {
