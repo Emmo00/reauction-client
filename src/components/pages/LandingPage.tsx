@@ -1,51 +1,54 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import FaultyTerminal from "@/components/FaultyTerminal";
+import { ArrowRightIcon, ChevronRight } from "lucide-react";
 
 export default function LandingPage() {
   return (
     <>
       <main className="relative min-h-screen overflow-hidden bg-background">
-        <div className="absolute inset-0 opacity-20">
-          <div className="grid grid-cols-3 gap-3 p-4">
-            {[
-              "/abstract-nft-purple.png",
-              "/digital-art-collectible-blue.jpg",
-              "/nft-collectible-green.jpg",
-              "/crypto-art-orange.jpg",
-              "/abstract-nft-purple.png",
-              "/digital-art-collectible-blue.jpg",
-              "/nft-collectible-green.jpg",
-              "/crypto-art-orange.jpg",
-              "/abstract-nft-purple.png",
-            ].map((img, i) => (
-              <div key={i} className="aspect-square overflow-hidden rounded-2xl">
-                <img
-                  src={img || "/placeholder.svg"}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ))}
+        <div className="absolute inset-0">
+          <div className="relative h-full w-full opacity-25">
+            <FaultyTerminal
+              scale={1.5}
+              gridMul={[2, 1]}
+              digitSize={1.2}
+              timeScale={1}
+              pause={false}
+              scanlineIntensity={1}
+              glitchAmount={1}
+              flickerAmount={1}
+              noiseAmp={1}
+              chromaticAberration={0}
+              dither={0}
+              curvature={0}
+              tint="#ae3bb0"
+              mouseReact={true}
+              mouseStrength={0.5}
+              pageLoadAnimation={false}
+              brightness={1}
+            />
           </div>
         </div>
 
-        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-16 text-center">
-          <h1 className="mb-4 text-balance text-4xl font-bold leading-tight text-foreground">
-            Exclusive
-            <br />
-            Digital
+        <div className="absolute px-4 bottom-8 mb:left-1/2 mb:-translate-x-1/2 md:relative md:top-1/2 md:left-auto md:transform-none md:-translate-y-1/2 mb-8 space-y-4 md:text-center">
+          <h1 className="text-balance font-sans text-5xl font-bold leading-tight tracking-tight text-white">
+            Resell and Auction
+            <br /> Your Cast
             <br />
             Collectibles
           </h1>
 
-          <p className="mb-8 max-w-xs text-pretty text-sm text-muted-foreground">
-            NFT has a value that can be called an asset that has a unique code.
+          <p className="text-pretty font-sans leading-relaxed text-gray-200">
+            Give your collectibles a second life. Earn by reselling or auctioning your Farcaster
+            NFTs.
           </p>
 
           <Link href="/home">
             <Button size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
-              Get Started
-              <span className="ml-2">→</span>
+              Get Started <ChevronRight className="ml-2 h-4 w-4" />
+              <ChevronRight className="h-4 w-4 -ml-2" />
+              <ChevronRight className="h-4 w-4 -ml-2" />
             </Button>
           </Link>
         </div>
