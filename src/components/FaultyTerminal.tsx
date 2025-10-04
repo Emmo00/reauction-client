@@ -248,9 +248,9 @@ export default function FaultyTerminal({
   style = {},
   ...rest
 }) {
-  const containerRef = useRef(null);
-  const programRef = useRef(null);
-  const rendererRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const programRef = useRef<Program | null>(null);
+  const rendererRef = useRef<Renderer | null>(null);
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
   const smoothMouseRef = useRef({ x: 0.5, y: 0.5 });
   const frozenTimeRef = useRef(0);
@@ -262,14 +262,31 @@ export default function FaultyTerminal({
 
   const ditherValue = useMemo(() => (typeof dither === 'boolean' ? (dither ? 1 : 0) : dither), [dither]);
 
-  const handleMouseMove = useCallback(e => {
-    const ctn = containerRef.current;
+interface MouseEvent {
+    clientX: number;
+    clientY: number;
+}
+
+interface MousePosition {
+    x: number;
+    y: number;
+}
+
+interface DOMRect {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+const handleMouseMove = useCallback((e: MouseEvent): void => {
+    const ctn: HTMLDivElement | null = containerRef.current;
     if (!ctn) return;
-    const rect = ctn.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = 1 - (e.clientY - rect.top) / rect.height;
-    mouseRef.current = { x, y };
-  }, []);
+    const rect: DOMRect = ctn.getBoundingClientRect();
+    const x: number = (e.clientX - rect.left) / rect.width;
+    const y: number = 1 - (e.clientY - rect.top) / rect.height;
+    mouseRef.current = { x, y } as MousePosition;
+}, []);
 
   useEffect(() => {
     const ctn = containerRef.current;
@@ -330,41 +347,57 @@ export default function FaultyTerminal({
     resizeObserver.observe(ctn);
     resize();
 
-    const update = t => {
-      rafRef.current = requestAnimationFrame(update);
+    interface SmoothMouse {
+        x: number;
+        y: number;
+    }
 
-      if (pageLoadAnimation && loadAnimationStartRef.current === 0) {
-        loadAnimationStartRef.current = t;
-      }
+    interface Mouse {
+        x: number;
+        y: number;
+    }
 
-      if (!pause) {
-        const elapsed = (t * 0.001 + timeOffsetRef.current) * timeScale;
-        program.uniforms.iTime.value = elapsed;
-        frozenTimeRef.current = elapsed;
-      } else {
-        program.uniforms.iTime.value = frozenTimeRef.current;
-      }
+    interface MouseUniform {
+        0: number;
+        1: number;
+        [index: number]: number;
+    }
 
-      if (pageLoadAnimation && loadAnimationStartRef.current > 0) {
-        const animationDuration = 2000;
-        const animationElapsed = t - loadAnimationStartRef.current;
-        const progress = Math.min(animationElapsed / animationDuration, 1);
-        program.uniforms.uPageLoadProgress.value = progress;
-      }
+    const update = (t: number): void => {
+        rafRef.current = requestAnimationFrame(update);
 
-      if (mouseReact) {
-        const dampingFactor = 0.08;
-        const smoothMouse = smoothMouseRef.current;
-        const mouse = mouseRef.current;
-        smoothMouse.x += (mouse.x - smoothMouse.x) * dampingFactor;
-        smoothMouse.y += (mouse.y - smoothMouse.y) * dampingFactor;
+        if (pageLoadAnimation && loadAnimationStartRef.current === 0) {
+            loadAnimationStartRef.current = t;
+        }
 
-        const mouseUniform = program.uniforms.uMouse.value;
-        mouseUniform[0] = smoothMouse.x;
-        mouseUniform[1] = smoothMouse.y;
-      }
+        if (!pause) {
+            const elapsed: number = (t * 0.001 + timeOffsetRef.current) * timeScale;
+            program.uniforms.iTime.value = elapsed;
+            frozenTimeRef.current = elapsed;
+        } else {
+            program.uniforms.iTime.value = frozenTimeRef.current;
+        }
 
-      renderer.render({ scene: mesh });
+        if (pageLoadAnimation && loadAnimationStartRef.current > 0) {
+            const animationDuration: number = 2000;
+            const animationElapsed: number = t - loadAnimationStartRef.current;
+            const progress: number = Math.min(animationElapsed / animationDuration, 1);
+            program.uniforms.uPageLoadProgress.value = progress;
+        }
+
+        if (mouseReact) {
+            const dampingFactor: number = 0.08;
+            const smoothMouse: SmoothMouse = smoothMouseRef.current;
+            const mouse: Mouse = mouseRef.current;
+            smoothMouse.x += (mouse.x - smoothMouse.x) * dampingFactor;
+            smoothMouse.y += (mouse.y - smoothMouse.y) * dampingFactor;
+
+            const mouseUniform: MouseUniform = program.uniforms.uMouse.value;
+            mouseUniform[0] = smoothMouse.x;
+            mouseUniform[1] = smoothMouse.y;
+        }
+
+        renderer.render({ scene: mesh });
     };
     rafRef.current = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
