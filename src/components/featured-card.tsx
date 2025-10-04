@@ -4,10 +4,6 @@ import { Button } from "@/components/ui/button"
 export function FeaturedCard() {
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600 p-6">
-      <button className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-        <Heart className="h-5 w-5 text-white" />
-      </button>
-
       <div className="mb-4 aspect-square overflow-hidden rounded-2xl">
         <img src="/person-in-black-mask-nft-collectible.jpg" alt="Featured NFT" className="h-full w-full object-cover" />
       </div>

@@ -11,11 +11,11 @@ export function MobileHeader() {
         </Avatar>
         <div>
           <p className="text-sm font-semibold text-foreground">Halo Pamaddog</p>
-          <p className="text-xs text-muted-foreground">12K News Upload</p>
+          <p className="text-xs text-muted-foreground">0 Upload</p>
         </div>
       </div>
       <button className="flex h-10 w-10 items-center justify-center rounded-full bg-card">
-        <Grid3x3 className="h-5 w-5" />
+        {/* <Grid3x3 className="h-5 w-5" /> */}
       </button>
     </div>
   )
