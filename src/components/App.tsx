@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import FaultyTerminal from "@/components/FaultyTerminal";
+import { Button } from "@/components/ui/button";
 import { ArrowRightIcon, ChevronRight } from "lucide-react";
 
 export default function LandingPage() {

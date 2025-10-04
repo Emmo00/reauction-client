@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BottomNav } from "@/components/bottom-nav"
 
-export default function CollectiblePage({ params }: { params: { id: string } }) {
+export default function CollectiblePage() {
   return (
     <>
       <div className="min-h-screen bg-background pb-32">
