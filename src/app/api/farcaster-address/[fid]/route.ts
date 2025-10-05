@@ -11,10 +11,10 @@ interface FarcasterUser {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fid: string } }
+  { params }: { params: Promise<{ fid: string }> }
 ) {
   try {
-    const { fid } = params;
+    const { fid } = await params;
     
     // Validate FID
     const fidNumber = parseInt(fid);
