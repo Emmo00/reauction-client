@@ -1,55 +1,32 @@
-import { useState, useEffect } from 'react';
-
-interface FarcasterAddressResult {
-  fid: number;
-  address: string;
-  source: 'farcaster_primary' | 'neynar_verified' | 'neynar_custody';
-}
+import { useQuery } from '@tanstack/react-query';
+import { FarcasterAddressAPI, farcasterAddressQueryKeys } from '@/lib/api/farcaster-address';
 
 export function useFarcasterAddress(fid?: number) {
-  const [address, setAddress] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!fid) {
-      setAddress(null);
-      setError(null);
-      setSource(null);
-      return;
-    }
-
-    const fetchAddress = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const response = await fetch(`/api/farcaster-address/${fid}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch wallet address');
-        }
-        
-        setAddress(data.address);
-        setSource(data.source);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-        setAddress(null);
-        setSource(null);
-      } finally {
-        setLoading(false);
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: farcasterAddressQueryKeys.byFid(fid || 0),
+    queryFn: () => FarcasterAddressAPI.getFarcasterAddress(fid!),
+    enabled: !!fid, // Only run query if we have an FID
+    staleTime: 10 * 60 * 1000, // Consider data stale after 10 minutes (addresses change rarely)
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors (invalid FID)
+      if (error instanceof Error && error.message.includes('404')) {
+        return false;
       }
-    };
-
-    fetchAddress();
-  }, [fid]);
+      return failureCount < 3;
+    },
+  });
 
   return {
-    address,
+    address: data?.address || null,
+    source: data?.source || null,
     loading,
-    error,
-    source,
+    error: error instanceof Error ? error.message : null,
+    refetch,
   };
 }

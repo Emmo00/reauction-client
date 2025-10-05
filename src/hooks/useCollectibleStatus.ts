@@ -1,62 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import { CollectibleStatus, CollectibleStatusResponse } from '@/types/collectible-status';
+import { CollectibleStatus } from '@/types/collectible-status';
+import { CollectibleStatusAPI, collectibleStatusQueryKeys } from '@/lib/api/collectible-status';
 
 export function useCollectibleStatus(address?: string) {
-  const [status, setStatus] = useState<CollectibleStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
   const { address: connectedAddress } = useAccount();
   
   // Use provided address or fall back to connected wallet address
   const targetAddress = address || connectedAddress;
 
-  useEffect(() => {
-    if (!targetAddress) {
-      setStatus(null);
-      setError(null);
-      return;
-    }
-
-    const fetchStatus = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const response = await fetch(`/api/collectible-status/${targetAddress}`);
-        const data: CollectibleStatusResponse = await response.json();
-        
-        if (!response.ok) {
-          throw new Error('error' in data ? data.error : 'Failed to fetch collectible status');
-        }
-        
-        if ('error' in data) {
-          throw new Error(data.error);
-        }
-        
-        setStatus(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-        setStatus(null);
-      } finally {
-        setLoading(false);
+  const {
+    data: status,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: collectibleStatusQueryKeys.byAddress(targetAddress || ''),
+    queryFn: () => CollectibleStatusAPI.getCollectibleStatus(targetAddress!),
+    enabled: !!targetAddress, // Only run query if we have an address
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors (invalid address)
+      if (error instanceof Error && error.message.includes('404')) {
+        return false;
       }
-    };
-
-    fetchStatus();
-  }, [targetAddress]);
+      return failureCount < 3;
+    },
+  });
 
   return {
-    status,
+    status: status as CollectibleStatus | null,
     loading,
-    error,
-    refetch: () => {
-      if (targetAddress) {
-        setLoading(true);
-        setError(null);
-        // Re-trigger the effect by updating a dependency
-      }
-    }
+    error: error instanceof Error ? error.message : null,
+    refetch,
   };
 }

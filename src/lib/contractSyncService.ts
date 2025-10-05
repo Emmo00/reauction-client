@@ -9,7 +9,7 @@ import AuctionCancelled from '@/models/AuctionCancelled';
 import { AUCTION_CONTRACT_ADDRESS } from '@/lib/constants';
 
 export class ContractSyncService {
-  private static readonly START_BLOCK = '31942142';
+  private static readonly START_BLOCK = '31958959';
   private static readonly MAX_BLOCK_RANGE = 2000;
 
   /**
@@ -91,7 +91,24 @@ export class ContractSyncService {
         fromBlock = toBlock + 1n;
       } catch (error) {
         console.error(`Error syncing blocks ${fromBlock} to ${toBlock}:`, error);
-        throw error;
+        
+        // Try to continue with smaller chunks if we hit an error
+        if (toBlock - fromBlock > 100n) {
+          const smallerToBlock = fromBlock + 100n;
+          console.log(`Retrying with smaller chunk: blocks ${fromBlock} to ${smallerToBlock}`);
+          try {
+            await this.syncBlockRange(publicClient, chainId, fromBlock, smallerToBlock);
+            await this.updateSyncStatus(chainId, smallerToBlock.toString(), true);
+            fromBlock = smallerToBlock + 1n;
+            continue;
+          } catch (retryError) {
+            console.error(`Retry also failed for blocks ${fromBlock} to ${smallerToBlock}:`, retryError);
+          }
+        }
+        
+        // Skip this problematic block range and continue
+        console.warn(`Skipping problematic block range ${fromBlock} to ${toBlock}`);
+        fromBlock = toBlock + 1n;
       }
     }
     
@@ -104,7 +121,23 @@ export class ContractSyncService {
   static async syncBlockRange(publicClient: any, chainId: number, fromBlock: bigint, toBlock: bigint) {
     const contractAddress = AUCTION_CONTRACT_ADDRESS as `0x${string}`;
     
-    // Fetch all event types in parallel
+    // Helper function to safely get logs with error handling
+    const safeGetLogs = async (eventConfig: any) => {
+      try {
+        const logs = await publicClient.getLogs({
+          address: contractAddress,
+          ...eventConfig,
+          fromBlock,
+          toBlock,
+        });
+        return Array.isArray(logs) ? logs : [];
+      } catch (error) {
+        console.warn(`Failed to fetch logs for event ${eventConfig.event?.name}:`, error);
+        return [];
+      }
+    };
+    
+    // Fetch all event types in parallel with error handling
     const [
       listingCreatedLogs,
       auctionStartedLogs,
@@ -114,8 +147,7 @@ export class ContractSyncService {
       auctionCancelledLogs,
     ] = await Promise.all([
       // ListingCreated events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'ListingCreated',
@@ -126,13 +158,10 @@ export class ContractSyncService {
             { name: 'price', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
       
       // AuctionStarted events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'AuctionStarted',
@@ -144,13 +173,10 @@ export class ContractSyncService {
             { name: 'duration', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
       
       // ListingPurchased events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'ListingPurchased',
@@ -162,13 +188,10 @@ export class ContractSyncService {
             { name: 'price', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
       
       // AuctionSettled events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'AuctionSettled',
@@ -180,13 +203,10 @@ export class ContractSyncService {
             { name: 'finalBid', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
       
       // ListingCancelled events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'ListingCancelled',
@@ -196,13 +216,10 @@ export class ContractSyncService {
             { name: 'tokenId', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
       
       // AuctionCancelled events
-      publicClient.getLogs({
-        address: contractAddress,
+      safeGetLogs({
         event: {
           type: 'event',
           name: 'AuctionCancelled',
@@ -212,8 +229,6 @@ export class ContractSyncService {
             { name: 'tokenId', type: 'uint256', indexed: false },
           ],
         },
-        fromBlock,
-        toBlock,
       }),
     ]);
 
@@ -241,8 +256,27 @@ export class ContractSyncService {
   }) {
     await dbConnect();
 
+    // Ensure all event arrays are valid before processing
+    const safeEvents = {
+      listingCreated: Array.isArray(events.listingCreated) ? events.listingCreated : [],
+      auctionStarted: Array.isArray(events.auctionStarted) ? events.auctionStarted : [],
+      listingPurchased: Array.isArray(events.listingPurchased) ? events.listingPurchased : [],
+      auctionSettled: Array.isArray(events.auctionSettled) ? events.auctionSettled : [],
+      listingCancelled: Array.isArray(events.listingCancelled) ? events.listingCancelled : [],
+      auctionCancelled: Array.isArray(events.auctionCancelled) ? events.auctionCancelled : [],
+    };
+
+    // Check if we have any events to process
+    const totalEvents = Object.values(safeEvents).reduce((total, events) => total + events.length, 0);
+    if (totalEvents === 0) {
+      console.log(`No events found in this batch`);
+      return;
+    }
+
+    console.log(`Processing ${totalEvents} total events`);
+
     // Process ListingCreated events
-    for (const log of events.listingCreated) {
+    for (const log of safeEvents.listingCreated) {
       try {
         await ListingCreated.findOneAndUpdate(
           {
@@ -268,7 +302,7 @@ export class ContractSyncService {
     }
 
     // Process AuctionStarted events
-    for (const log of events.auctionStarted) {
+    for (const log of safeEvents.auctionStarted) {
       try {
         await AuctionStarted.findOneAndUpdate(
           {
@@ -295,7 +329,7 @@ export class ContractSyncService {
     }
 
     // Process ListingPurchased events
-    for (const log of events.listingPurchased) {
+    for (const log of safeEvents.listingPurchased) {
       try {
         await ListingPurchased.findOneAndUpdate(
           {
@@ -322,7 +356,7 @@ export class ContractSyncService {
     }
 
     // Process AuctionSettled events
-    for (const log of events.auctionSettled) {
+    for (const log of safeEvents.auctionSettled) {
       try {
         await AuctionSettled.findOneAndUpdate(
           {
@@ -349,7 +383,7 @@ export class ContractSyncService {
     }
 
     // Process ListingCancelled events
-    for (const log of events.listingCancelled) {
+    for (const log of safeEvents.listingCancelled) {
       try {
         await ListingCancelled.findOneAndUpdate(
           {
@@ -374,7 +408,7 @@ export class ContractSyncService {
     }
 
     // Process AuctionCancelled events
-    for (const log of events.auctionCancelled) {
+    for (const log of safeEvents.auctionCancelled) {
       try {
         await AuctionCancelled.findOneAndUpdate(
           {

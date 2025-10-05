@@ -41,6 +41,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const checksumAddress = getAddress(address);
 
+    console.log(`Fetching collectible status for address: ${checksumAddress}`);
+
     // Get the auction contract instance
     const auctionContract = getContract({
       address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
