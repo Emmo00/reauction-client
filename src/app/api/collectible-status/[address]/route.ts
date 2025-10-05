@@ -4,6 +4,7 @@ import { base, baseSepolia } from 'viem/chains';
 import { AUCTION_CONTRACT_ADDRESS, BASE_RPC_URL, BASE_SEPOLIA_RPC_URL } from '@/lib/constants';
 import auctionAbi from '@/abis/auction.json';
 import collectibleAbi from '@/abis/collectible.json';
+import { LogCacheService } from '@/lib/logCacheService';
 
 // Determine which chain to use based on environment
 const chain = process.env.NODE_ENV === 'production' ? base : baseSepolia;
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       console.log(`Processing blocks ${start} to ${end}`);
 
       try {
-        // Get all event types for this block range
+        // Get all event types for this block range using cache
         const [
           listingCreatedLogs,
           auctionStartedLogs,
@@ -98,125 +99,149 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           auctionCancelledLogs,
         ] = await Promise.all([
           // Listing Created events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'ListingCreated',
-              inputs: [
-                { name: 'listingId', type: 'uint256', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: true },
-                { name: 'price', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'ListingCreated',
+                inputs: [
+                  { name: 'listingId', type: 'uint256', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: true },
+                  { name: 'price', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
           
           // Auction Started events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'AuctionStarted',
-              inputs: [
-                { name: 'auctionId', type: 'uint256', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: true },
-                { name: 'startAsk', type: 'uint256', indexed: false },
-                { name: 'duration', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'AuctionStarted',
+                inputs: [
+                  { name: 'auctionId', type: 'uint256', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: true },
+                  { name: 'startAsk', type: 'uint256', indexed: false },
+                  { name: 'duration', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
           
           // Listing Purchased events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'ListingPurchased',
-              inputs: [
-                { name: 'listingId', type: 'uint256', indexed: true },
-                { name: 'buyer', type: 'address', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: false },
-                { name: 'price', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'ListingPurchased',
+                inputs: [
+                  { name: 'listingId', type: 'uint256', indexed: true },
+                  { name: 'buyer', type: 'address', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: false },
+                  { name: 'price', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
           
           // Auction Settled events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'AuctionSettled',
-              inputs: [
-                { name: 'auctionId', type: 'uint256', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'winner', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: false },
-                { name: 'finalBid', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'AuctionSettled',
+                inputs: [
+                  { name: 'auctionId', type: 'uint256', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'winner', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: false },
+                  { name: 'finalBid', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
           
           // Listing Cancelled events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'ListingCancelled',
-              inputs: [
-                { name: 'listingId', type: 'uint256', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'ListingCancelled',
+                inputs: [
+                  { name: 'listingId', type: 'uint256', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
           
           // Auction Cancelled events
-          publicClient.getLogs({
-            address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'AuctionCancelled',
-              inputs: [
-                { name: 'auctionId', type: 'uint256', indexed: true },
-                { name: 'creator', type: 'address', indexed: true },
-                { name: 'tokenId', type: 'uint256', indexed: false },
-              ],
+          LogCacheService.getLogsWithCache(
+            publicClient as any,
+            {
+              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
+              event: {
+                type: 'event',
+                name: 'AuctionCancelled',
+                inputs: [
+                  { name: 'auctionId', type: 'uint256', indexed: true },
+                  { name: 'creator', type: 'address', indexed: true },
+                  { name: 'tokenId', type: 'uint256', indexed: false },
+                ],
+              },
+              args: {
+                creator: checksumAddress,
+              },
+              fromBlock: start,
+              toBlock: end,
             },
-            args: {
-              creator: checksumAddress,
-            },
-            fromBlock: start,
-            toBlock: end,
-          }),
+            chain.id
+          ),
         ]);
 
         // Aggregate results
