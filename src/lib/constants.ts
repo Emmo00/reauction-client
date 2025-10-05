@@ -1,5 +1,7 @@
 import { type AccountAssociation } from "@farcaster/miniapp-core/src/manifest";
 
+export const AUCTION_CONTRACT_ADDRESS = "0xYourAuctionContractAddressHere";
+
 /**
  * Application constants and configuration values.
  *

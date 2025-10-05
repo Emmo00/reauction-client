@@ -1,18 +1,32 @@
-import { ChevronLeft, MoreVertical } from "lucide-react"
-import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { BottomNav } from "@/components/bottom-nav"
+"use client";
+
+import { ChevronLeft, MoreVertical } from "lucide-react";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { BottomNav } from "@/components/bottom-nav";
+import { useState, useEffect } from "react";
+import sdk from "@farcaster/miniapp-sdk";
+import { MiniAppContext } from "@farcaster/miniapp-core/dist/context";
 
 const collectibles = [
   { id: 1, image: "/abstract-nft-purple.png", name: "Purple Abstract", price: "12.5" },
   { id: 2, image: "/digital-art-collectible-blue.jpg", name: "Blue Digital", price: "8.2" },
   { id: 3, image: "/nft-collectible-green.jpg", name: "Green NFT", price: "15.8" },
   { id: 4, image: "/crypto-art-orange.jpg", name: "Orange Crypto", price: "22.1" },
-]
+];
 
 export default function ProfilePage() {
+  const [context, setContext] = useState<MiniAppContext | null>(null);
+
+  useEffect(() => {
+    async function waitForContext() {
+      setContext(await sdk.context);
+    }
+
+    waitForContext();
+  }, []);
   return (
     <>
       <div className="min-h-screen bg-background pb-32">
@@ -31,14 +45,11 @@ export default function ProfilePage() {
         <div className="px-4 space-y-6">
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 border-4 border-primary mb-4">
-              <AvatarImage src="/placeholder.svg?height=96&width=96" />
-              <AvatarFallback>HP</AvatarFallback>
+              <AvatarImage src={context?.user?.pfpUrl} />
+              <AvatarFallback>{context?.user?.username?.charAt(0) ?? "U"}</AvatarFallback>
             </Avatar>
-            <h2 className="text-xl font-bold text-foreground">Halo Pamaddog</h2>
-            <p className="text-sm text-muted-foreground mb-4">@halopamaddog</p>
-            <p className="text-sm text-muted-foreground max-w-xs mb-4">
-              Digital artist and NFT collector. Creating unique pieces for the metaverse.
-            </p>
+            <h2 className="text-xl font-bold text-foreground">{context?.user?.displayName}</h2>
+            <p className="text-sm text-muted-foreground mb-4">@{context?.user?.username}</p>
 
             <div className="grid grid-cols-3 gap-6 w-full max-w-sm mb-4">
               <div>
@@ -98,5 +109,5 @@ export default function ProfilePage() {
       </div>
       <BottomNav />
     </>
-  )
+  );
 }

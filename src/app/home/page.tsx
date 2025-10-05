@@ -19,7 +19,6 @@ export default function HomePage() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">All</h2>
-              <button className="text-sm text-muted-foreground">See All</button>
             </div>
             <div className="flex flex-col gap-2">
               <FeaturedCard />
