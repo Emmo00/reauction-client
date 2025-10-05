@@ -1,6 +1,6 @@
 import { type AccountAssociation } from "@farcaster/miniapp-core/src/manifest";
 
-export const AUCTION_CONTRACT_ADDRESS = "0x9086D4F1c87FD80B11BE3E10895C49e20a44b91e";
+export const AUCTION_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
 
 // Blockchain configuration
 export const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";

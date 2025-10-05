@@ -4,7 +4,7 @@ import { base, baseSepolia } from 'viem/chains';
 import { AUCTION_CONTRACT_ADDRESS, BASE_RPC_URL, BASE_SEPOLIA_RPC_URL } from '@/lib/constants';
 import auctionAbi from '@/abis/auction.json';
 import collectibleAbi from '@/abis/collectible.json';
-import { LogCacheService } from '@/lib/logCacheService';
+import { ContractSyncService } from '@/lib/contractSyncService';
 
 // Determine which chain to use based on environment
 const chain = process.env.NODE_ENV === 'production' ? base : baseSepolia;
@@ -61,202 +61,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // 1. Get number of casts collected (NFT balance)
     const castsCollected = await collectibleContract.read.balanceOf([checksumAddress]);
 
-    // 2. Get current block number for event filtering
-    const currentBlock = await publicClient.getBlockNumber();
-    console.log('Current Block:', currentBlock);
-    
-    // Use a more recent starting block to reduce query load and avoid timeouts
-    // Start from 10,000 blocks ago instead of genesis
-    const fromBlock = currentBlock > 10000n ? currentBlock - 10000n : 0n;
+    // 2. Ensure contract events are synced to current block
+    console.log('Syncing contract events to current block...');
+    await ContractSyncService.syncToCurrentBlock(publicClient, chain.id);
 
-    console.log('Querying from block:', fromBlock, 'to block:', currentBlock);
-
-    // Query events in smaller chunks to avoid RPC timeouts
-    const maxBlockRange = 2000n;
-    let allEvents = {
-      listingCreated: [] as any[],
-      auctionStarted: [] as any[],
-      listingPurchased: [] as any[],
-      auctionSettled: [] as any[],
-      listingCancelled: [] as any[],
-      auctionCancelled: [] as any[],
-    };
-
-    // Process blocks in chunks
-    for (let start = fromBlock; start <= currentBlock; start += maxBlockRange) {
-      const end = start + maxBlockRange - 1n > currentBlock ? currentBlock : start + maxBlockRange - 1n;
-      
-      console.log(`Processing blocks ${start} to ${end}`);
-
-      try {
-        // Get all event types for this block range using cache
-        const [
-          listingCreatedLogs,
-          auctionStartedLogs,
-          listingPurchasedLogs,
-          auctionSettledLogs,
-          listingCancelledLogs,
-          auctionCancelledLogs,
-        ] = await Promise.all([
-          // Listing Created events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'ListingCreated',
-                inputs: [
-                  { name: 'listingId', type: 'uint256', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: true },
-                  { name: 'price', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-          
-          // Auction Started events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'AuctionStarted',
-                inputs: [
-                  { name: 'auctionId', type: 'uint256', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: true },
-                  { name: 'startAsk', type: 'uint256', indexed: false },
-                  { name: 'duration', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-          
-          // Listing Purchased events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'ListingPurchased',
-                inputs: [
-                  { name: 'listingId', type: 'uint256', indexed: true },
-                  { name: 'buyer', type: 'address', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: false },
-                  { name: 'price', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-          
-          // Auction Settled events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'AuctionSettled',
-                inputs: [
-                  { name: 'auctionId', type: 'uint256', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'winner', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: false },
-                  { name: 'finalBid', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-          
-          // Listing Cancelled events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'ListingCancelled',
-                inputs: [
-                  { name: 'listingId', type: 'uint256', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-          
-          // Auction Cancelled events
-          LogCacheService.getLogsWithCache(
-            publicClient as any,
-            {
-              address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'AuctionCancelled',
-                inputs: [
-                  { name: 'auctionId', type: 'uint256', indexed: true },
-                  { name: 'creator', type: 'address', indexed: true },
-                  { name: 'tokenId', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                creator: checksumAddress,
-              },
-              fromBlock: start,
-              toBlock: end,
-            },
-            chain.id
-          ),
-        ]);
-
-        // Aggregate results
-        allEvents.listingCreated.push(...listingCreatedLogs);
-        allEvents.auctionStarted.push(...auctionStartedLogs);
-        allEvents.listingPurchased.push(...listingPurchasedLogs);
-        allEvents.auctionSettled.push(...auctionSettledLogs);
-        allEvents.listingCancelled.push(...listingCancelledLogs);
-        allEvents.auctionCancelled.push(...auctionCancelledLogs);
-
-      } catch (chunkError) {
-        console.error(`Error processing blocks ${start} to ${end}:`, chunkError);
-        // Continue with next chunk even if one fails
-      }
-    }
+    // 3. Query events for this specific creator from database
+    console.log('Querying events for creator:', checksumAddress);
+    const allEvents = await ContractSyncService.getCreatorEvents(chain.id, checksumAddress);
 
     console.log('Event counts:', {
       listingCreated: allEvents.listingCreated.length,
