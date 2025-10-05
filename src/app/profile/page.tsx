@@ -9,6 +9,8 @@ import { BottomNav } from "@/components/bottom-nav";
 import { useState, useEffect } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { MiniAppContext } from "@farcaster/miniapp-core/dist/context";
+import { useFarcasterAddress } from "@/hooks/useFarcasterAddress";
+import { useCollectibleStatus } from "@/hooks/useCollectibleStatus";
 
 const collectibles = [
   { id: 1, image: "/abstract-nft-purple.png", name: "Purple Abstract", price: "12.5" },
@@ -27,6 +29,19 @@ export default function ProfilePage() {
 
     waitForContext();
   }, []);
+
+  // Get the user's wallet address from their FID
+  const { address: userAddress, loading: addressLoading, error: addressError } = useFarcasterAddress(
+    context?.user?.fid
+  );
+
+  // Get the collectible status using the wallet address
+  const { status, loading: statusLoading, error: statusError } = useCollectibleStatus(
+    userAddress || undefined
+  );
+
+  const isLoading = addressLoading || statusLoading;
+  const hasError = addressError || statusError;
   return (
     <>
       <div className="min-h-screen bg-background pb-32">
@@ -53,18 +68,33 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-3 gap-6 w-full max-w-sm mb-4">
               <div>
-                <p className="text-2xl font-bold text-foreground">142</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLoading ? "..." : hasError ? "?" : (status?.castsCollected ?? 0)}
+                </p>
                 <p className="text-xs text-muted-foreground">Collected</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">28</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLoading ? "..." : hasError ? "?" : (status?.castsBeingSold ?? 0)}
+                </p>
                 <p className="text-xs text-muted-foreground">Selling</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">1.2K</p>
-                <p className="text-xs text-muted-foreground">Followers</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLoading ? "..." : hasError ? "?" : (status?.castsSold ?? 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Sold</p>
               </div>
             </div>
+            
+            {/* Debug info - remove in production */}
+            {(addressError || statusError) && (
+              <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded">
+                {addressError && <div>Address Error: {addressError}</div>}
+                {statusError && <div>Status Error: {statusError}</div>}
+                {userAddress && <div>Address: {userAddress}</div>}
+              </div>
+            )}
           </div>
 
           <Tabs defaultValue="collected" className="w-full">
