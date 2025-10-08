@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAddress, isAddress } from 'viem';
+import { getAuctionContractAddress, getCoinbaseQLSchema } from '@/lib/constants';
 
 // CoinbaSeQL SQL API configuration
 const SQL_API_URL = 'https://api.cdp.coinbase.com/platform/v2/data/query/run';
@@ -67,7 +68,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const checksumAddress = getAddress(address);
     const lowerAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
     
+    // Get environment-specific values
+    const contractAddress = getAuctionContractAddress().toLowerCase();
+    const schema = getCoinbaseQLSchema();
+    
     console.log('Fetching collectible status for address:', checksumAddress);
+    console.log('Using contract address:', contractAddress);
+    console.log('Using schema:', schema);
 
     // Query for auction and listing events related to this creator
     const eventsQuery = `
@@ -75,8 +82,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         event_name,
         parameters,
         block_timestamp
-      FROM base.events
-      WHERE address = '0x3af2fc5ed9c3da8f669e34fd6aba5a87afc933ae'
+      FROM ${schema}.events
+      WHERE address = '${contractAddress}'
         AND (
           (event_name = 'ListingCreated' AND parameters['creator'] = '${lowerAddress}') OR
           (event_name = 'AuctionStarted' AND parameters['creator'] = '${lowerAddress}') OR

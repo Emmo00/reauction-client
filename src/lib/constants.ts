@@ -3,6 +3,22 @@ import { type AccountAssociation } from "@farcaster/miniapp-core/src/manifest";
 export const AUCTION_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
 export const AUCTION_CONTRACT_ADDRESS_SEPOLIA = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
 
+/**
+ * Get the appropriate auction contract address based on environment
+ */
+export const getAuctionContractAddress = (): string => {
+  return process.env.NODE_ENV === 'production' 
+    ? AUCTION_CONTRACT_ADDRESS 
+    : AUCTION_CONTRACT_ADDRESS_SEPOLIA;
+};
+
+/**
+ * Get the appropriate CoinbaSeQL database schema based on environment
+ */
+export const getCoinbaseQLSchema = (): string => {
+  return process.env.NODE_ENV === 'production' ? 'base' : 'base_sepolia';
+};
+
 // Blockchain configuration
 export const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
 export const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";

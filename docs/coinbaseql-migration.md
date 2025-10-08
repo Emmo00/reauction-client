@@ -28,12 +28,47 @@ This document outlines the complete architectural refactor from RPC-based blockc
 4. **Maintenance**: No database schemas, sync jobs, or event models to maintain
 5. **Scalability**: Coinbase's infrastructure handles indexing and scaling
 
+## Environment Configuration
+
+The API automatically switches between production and development configurations:
+
+### Production Environment (`NODE_ENV=production`)
+- **Schema**: `base` (Mainnet)
+- **Contract**: Uses `AUCTION_CONTRACT_ADDRESS`
+- **Network**: Base Mainnet
+
+### Development Environment (`NODE_ENV=development`)
+- **Schema**: `base_sepolia` (Testnet)
+- **Contract**: Uses `AUCTION_CONTRACT_ADDRESS_SEPOLIA`
+- **Network**: Base Sepolia
+
+### Constants Functions
+```typescript
+// Get appropriate contract address based on environment
+const contractAddress = getAuctionContractAddress();
+
+// Get appropriate CoinbaSeQL schema based on environment
+const schema = getCoinbaseQLSchema(); // 'base' or 'base_sepolia'
+```
+
 ## API Implementation
 
 ### New SQL Query Structure
 ```sql
+-- Production (base schema)
 SELECT event_name, parameters, block_timestamp
 FROM base.events
+WHERE address = '0x3af2fc5ed9c3da8f669e34fd6aba5a87afc933ae'
+  AND (
+    (event_name = 'ListingCreated' AND parameters['creator'] = '${address}') OR
+    (event_name = 'AuctionStarted' AND parameters['creator'] = '${address}') OR
+    -- ... other event types
+  )
+ORDER BY block_timestamp DESC
+
+-- Development (base_sepolia schema)  
+SELECT event_name, parameters, block_timestamp
+FROM base_sepolia.events
 WHERE address = '0x3af2fc5ed9c3da8f669e34fd6aba5a87afc933ae'
   AND (
     (event_name = 'ListingCreated' AND parameters['creator'] = '${address}') OR
