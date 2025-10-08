@@ -1,62 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAddress, isAddress } from 'viem';
-import { getAuctionContractAddress, getCoinbaseQLSchema } from '@/lib/constants';
+import { NextRequest, NextResponse } from "next/server";
+import { getAuctionContractAddress, getCoinbaseQLSchema } from "@/lib/constants";
+import { CollectibleStatus, SqlApiResponse } from "@/types/collectible-status";
+import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
+import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
+import { getChain, getRPCURL } from "@/lib/constants";
+import auctionAbi from "@/abis/auction.json";
+import collectibleAbi from "@/abis/collectible.json";
 
-// CoinbaSeQL SQL API configuration
-const SQL_API_URL = 'https://api.cdp.coinbase.com/platform/v2/data/query/run';
-const CDP_CLIENT_TOKEN = process.env.CDP_CLIENT_TOKEN;
+// Create public client for blockchain interactions using HTTP
+const publicClient = createPublicClient({
+  chain: getChain(),
+  transport: http(getRPCURL(), {
+    batch: true,
+    timeout: 30000, // 30 second timeout
+    retryCount: 3,
+    retryDelay: 1000,
+  }),
+});
 
-if (!CDP_CLIENT_TOKEN) {
-  console.warn('CDP_CLIENT_TOKEN not found in environment variables');
-}
+// Get the auction contract instance
+const auctionContract = getContract({
+  address: getAuctionContractAddress() as `0x${string}`,
+  abi: auctionAbi,
+  client: publicClient,
+});
 
-interface CollectibleStatus {
-  address: string;
-  castsCollected: number;
-  castsBeingSold: number;
-  castsSold: number;
-}
-
-interface SqlApiResponse {
-  result: Array<{
-    event_name: string;
-    parameters: {
-      creator?: string;
-      winner?: string;
-      tokenId?: string;
-      listingId?: string;
-      auctionId?: string;
-    };
-    block_timestamp: string;
-  }>;
-}
-
-/**
- * Execute a SQL query using CoinbaSeQL API
- */
-async function executeQuery(sql: string): Promise<SqlApiResponse> {
-  if (!CDP_CLIENT_TOKEN) {
-    throw new Error('CDP_CLIENT_TOKEN is required but not configured');
-  }
-
-  const response = await fetch(SQL_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CDP_CLIENT_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ sql }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SQL API request failed: ${response.status} ${response.statusText}\n${errorText}`);
-  }
-
-  return response.json();
-}
-
-export async function GET(request: NextRequest, { params }: { params: Promise<{ address: string }> }) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ address: string }> }) {
   try {
     const { address } = await params;
 
@@ -67,14 +36,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const checksumAddress = getAddress(address);
     const lowerAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
-    
+
     // Get environment-specific values
-    const contractAddress = getAuctionContractAddress().toLowerCase();
+    const auctionContractAddress = getAuctionContractAddress().toLowerCase();
     const schema = getCoinbaseQLSchema();
-    
-    console.log('Fetching collectible status for address:', checksumAddress);
-    console.log('Using contract address:', contractAddress);
-    console.log('Using schema:', schema);
+
+    console.log("Fetching collectible status for address:", checksumAddress);
+    console.log("Using contract address:", auctionContractAddress);
+    console.log("Using schema:", schema);
 
     // Query for auction and listing events related to this creator
     const eventsQuery = `
@@ -83,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         parameters,
         block_timestamp
       FROM ${schema}.events
-      WHERE address = '${contractAddress}'
+      WHERE address = '${auctionContractAddress}'
         AND (
           (event_name = 'ListingCreated' AND parameters['creator'] = '${lowerAddress}') OR
           (event_name = 'AuctionStarted' AND parameters['creator'] = '${lowerAddress}') OR
@@ -96,93 +65,110 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     `;
 
     // Execute the query
-    const eventsResult = await executeQuery(eventsQuery);
+    const eventsResult = await executeCoinbaseqlQuery(eventsQuery);
 
-    // For now, we'll set castsCollected to 0 since we need the collectible contract address
-    // This can be enhanced once we know the specific collectible contract address
-    const castsCollected = 0;
+    console.log("events result", eventsResult);
 
     // Process events to calculate stats
     let castsBeingSold = 0;
     let castsSold = 0;
-    
+
     // Track active listings and auctions
     const activeListings = new Set<string>();
     const activeAuctions = new Set<string>();
-    
+
     // Process events chronologically (oldest first)
-    const events = eventsResult.result.reverse();
-    
+    const events = eventsResult.result?.reverse() ?? [];
+
     for (const event of events) {
       const { event_name, parameters } = event;
-      
+
+      if (!event_name || !parameters) continue;
+
       switch (event_name) {
-        case 'ListingCreated':
+        case "ListingCreated":
           if (parameters.listingId) {
             activeListings.add(parameters.listingId);
           }
           break;
-          
-        case 'AuctionStarted':
+
+        case "AuctionStarted":
           if (parameters.auctionId) {
             activeAuctions.add(parameters.auctionId);
           }
           break;
-          
-        case 'ListingPurchased':
+
+        case "ListingPurchased":
           if (parameters.listingId) {
             activeListings.delete(parameters.listingId);
             castsSold++;
           }
           break;
-          
-        case 'AuctionSettled':
+
+        case "AuctionSettled":
           if (parameters.auctionId) {
             activeAuctions.delete(parameters.auctionId);
-            if (parameters.winner && parameters.winner !== '0x0000000000000000000000000000000000000000') {
+            if (
+              parameters.winner &&
+              parameters.winner !== "0x0000000000000000000000000000000000000000"
+            ) {
               castsSold++;
             }
           }
           break;
-          
-        case 'ListingCancelled':
+
+        case "ListingCancelled":
           if (parameters.listingId) {
             activeListings.delete(parameters.listingId);
           }
           break;
-          
-        case 'AuctionCancelled':
+
+        case "AuctionCancelled":
           if (parameters.auctionId) {
             activeAuctions.delete(parameters.auctionId);
           }
           break;
       }
     }
-    
+
     // Active listings and auctions are casts being sold
     castsBeingSold = activeListings.size + activeAuctions.size;
+
+    // Query the auction contract to get the collectible address
+    console.log("Querying auction contract for collectible address...");
+    let collectibleAddress = await auctionContract.read.collectible();
+
+    // Get the collectible contract instance
+    const collectibleContract = getContract({
+      address: collectibleAddress as `0x${string}`,
+      abi: collectibleAbi,
+      client: publicClient,
+    });
+
+    let castsOwned = await collectibleContract.read.balanceOf([checksumAddress]);
+
+    let castsCollected = 0;
 
     const collectibleStatus: CollectibleStatus = {
       address: checksumAddress,
       castsCollected: Number(castsCollected),
+      castsOwned: Number(castsOwned),
       castsBeingSold,
       castsSold,
     };
 
-    console.log('Collectible status result:', collectibleStatus);
+    console.log("Collectible status result:", collectibleStatus);
 
     return NextResponse.json(collectibleStatus);
-
   } catch (error) {
-    console.error('Error fetching collectible status:', error);
-    
+    console.error("Error fetching collectible status:", error);
+
     return NextResponse.json(
-      { 
+      {
         error: "Failed to fetch collectible status",
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
   }
 }
-

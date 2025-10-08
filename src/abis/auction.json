@@ -523,7 +523,7 @@
     "name": "ListingCreated",
     "inputs": [
       { "name": "listingId", "type": "uint256", "indexed": true, "internalType": "uint256" },
-      { "name": "seller", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "creator", "type": "address", "indexed": true, "internalType": "address" },
       { "name": "tokenId", "type": "uint256", "indexed": true, "internalType": "uint256" },
       { "name": "price", "type": "uint256", "indexed": false, "internalType": "uint256" }
     ],
