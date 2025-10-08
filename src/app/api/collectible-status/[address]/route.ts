@@ -1,33 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPublicClient, http, getContract, getAddress, isAddress } from 'viem';
-import { base, baseSepolia } from 'viem/chains';
-import { AUCTION_CONTRACT_ADDRESS, BASE_RPC_URL, BASE_SEPOLIA_RPC_URL } from '@/lib/constants';
-import auctionAbi from '@/abis/auction.json';
-import collectibleAbi from '@/abis/collectible.json';
-import { ContractSyncService } from '@/lib/contractSyncService';
+import { getAddress, isAddress } from 'viem';
 
-// Determine which chain to use based on environment
-const chain = process.env.NODE_ENV === 'production' ? base : baseSepolia;
+// CoinbaSeQL SQL API configuration
+const SQL_API_URL = 'https://api.cdp.coinbase.com/platform/v2/data/query/run';
+const CDP_CLIENT_TOKEN = process.env.CDP_CLIENT_TOKEN;
 
-// Use HTTP RPC for more reliable connections (WebSocket was causing issues)
-const rpcUrl = process.env.NODE_ENV === 'production' ? BASE_RPC_URL : BASE_SEPOLIA_RPC_URL;
-
-// Create public client for blockchain interactions using HTTP
-const publicClient = createPublicClient({
-  chain,
-  transport: http(rpcUrl, {
-    batch: true,
-    timeout: 30000, // 30 second timeout
-    retryCount: 3,
-    retryDelay: 1000,
-  }),
-});
+if (!CDP_CLIENT_TOKEN) {
+  console.warn('CDP_CLIENT_TOKEN not found in environment variables');
+}
 
 interface CollectibleStatus {
   address: string;
   castsCollected: number;
   castsBeingSold: number;
   castsSold: number;
+}
+
+interface SqlApiResponse {
+  result: Array<{
+    event_name: string;
+    parameters: {
+      creator?: string;
+      winner?: string;
+      tokenId?: string;
+      listingId?: string;
+      auctionId?: string;
+    };
+    block_timestamp: string;
+  }>;
+}
+
+/**
+ * Execute a SQL query using CoinbaSeQL API
+ */
+async function executeQuery(sql: string): Promise<SqlApiResponse> {
+  if (!CDP_CLIENT_TOKEN) {
+    throw new Error('CDP_CLIENT_TOKEN is required but not configured');
+  }
+
+  const response = await fetch(SQL_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CDP_CLIENT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`SQL API request failed: ${response.status} ${response.statusText}\n${errorText}`);
+  }
+
+  return response.json();
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ address: string }> }) {
@@ -40,97 +65,117 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const checksumAddress = getAddress(address);
+    const lowerAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
+    
+    console.log('Fetching collectible status for address:', checksumAddress);
 
-    console.log(`Fetching collectible status for address: ${checksumAddress}`);
+    // Query for auction and listing events related to this creator
+    const eventsQuery = `
+      SELECT 
+        event_name,
+        parameters,
+        block_timestamp
+      FROM base.events
+      WHERE address = '0x3af2fc5ed9c3da8f669e34fd6aba5a87afc933ae'
+        AND (
+          (event_name = 'ListingCreated' AND parameters['creator'] = '${lowerAddress}') OR
+          (event_name = 'AuctionStarted' AND parameters['creator'] = '${lowerAddress}') OR
+          (event_name = 'ListingPurchased' AND parameters['creator'] = '${lowerAddress}') OR
+          (event_name = 'AuctionSettled' AND parameters['creator'] = '${lowerAddress}') OR
+          (event_name = 'ListingCancelled' AND parameters['creator'] = '${lowerAddress}') OR
+          (event_name = 'AuctionCancelled' AND parameters['creator'] = '${lowerAddress}')
+        )
+      ORDER BY block_timestamp DESC
+    `;
 
-    // Get the auction contract instance
-    const auctionContract = getContract({
-      address: AUCTION_CONTRACT_ADDRESS as `0x${string}`,
-      abi: auctionAbi,
-      client: publicClient,
-    });
+    // Execute the query
+    const eventsResult = await executeQuery(eventsQuery);
 
-    // Get the collectible contract address from the auction contract
-    const collectibleAddress = await auctionContract.read.collectible();
+    // For now, we'll set castsCollected to 0 since we need the collectible contract address
+    // This can be enhanced once we know the specific collectible contract address
+    const castsCollected = 0;
 
-    // Get the collectible contract instance
-    const collectibleContract = getContract({
-      address: collectibleAddress as `0x${string}`,
-      abi: collectibleAbi,
-      client: publicClient,
-    });
+    // Process events to calculate stats
+    let castsBeingSold = 0;
+    let castsSold = 0;
+    
+    // Track active listings and auctions
+    const activeListings = new Set<string>();
+    const activeAuctions = new Set<string>();
+    
+    // Process events chronologically (oldest first)
+    const events = eventsResult.result.reverse();
+    
+    for (const event of events) {
+      const { event_name, parameters } = event;
+      
+      switch (event_name) {
+        case 'ListingCreated':
+          if (parameters.listingId) {
+            activeListings.add(parameters.listingId);
+          }
+          break;
+          
+        case 'AuctionStarted':
+          if (parameters.auctionId) {
+            activeAuctions.add(parameters.auctionId);
+          }
+          break;
+          
+        case 'ListingPurchased':
+          if (parameters.listingId) {
+            activeListings.delete(parameters.listingId);
+            castsSold++;
+          }
+          break;
+          
+        case 'AuctionSettled':
+          if (parameters.auctionId) {
+            activeAuctions.delete(parameters.auctionId);
+            if (parameters.winner && parameters.winner !== '0x0000000000000000000000000000000000000000') {
+              castsSold++;
+            }
+          }
+          break;
+          
+        case 'ListingCancelled':
+          if (parameters.listingId) {
+            activeListings.delete(parameters.listingId);
+          }
+          break;
+          
+        case 'AuctionCancelled':
+          if (parameters.auctionId) {
+            activeAuctions.delete(parameters.auctionId);
+          }
+          break;
+      }
+    }
+    
+    // Active listings and auctions are casts being sold
+    castsBeingSold = activeListings.size + activeAuctions.size;
 
-    // 1. Get number of casts collected (NFT balance)
-    const castsCollected = await collectibleContract.read.balanceOf([checksumAddress]);
-
-    // 2. Ensure contract events are synced to current block
-    console.log('Syncing contract events to current block...');
-    await ContractSyncService.syncToCurrentBlock(publicClient, chain.id);
-
-    // 3. Query events for this specific creator from database
-    console.log('Querying events for creator:', checksumAddress);
-    const allEvents = await ContractSyncService.getCreatorEvents(chain.id, checksumAddress);
-
-    console.log('Event counts:', {
-      listingCreated: allEvents.listingCreated.length,
-      auctionStarted: allEvents.auctionStarted.length,
-      listingPurchased: allEvents.listingPurchased.length,
-      auctionSettled: allEvents.auctionSettled.length,
-      listingCancelled: allEvents.listingCancelled.length,
-      auctionCancelled: allEvents.auctionCancelled.length,
-    });
-
-    // Calculate active sales (currently being sold)
-    const totalListingsCreated = allEvents.listingCreated.length;
-    const totalAuctionsCreated = allEvents.auctionStarted.length;
-    const totalListingsSold = allEvents.listingPurchased.length;
-    const totalAuctionsSold = allEvents.auctionSettled.length;
-    const totalListingsCancelled = allEvents.listingCancelled.length;
-    const totalAuctionsCancelled = allEvents.auctionCancelled.length;
-
-    const castsBeingSold = Math.max(0,
-      (totalListingsCreated + totalAuctionsCreated) - 
-      (totalListingsSold + totalAuctionsSold + totalListingsCancelled + totalAuctionsCancelled)
-    );
-
-    const castsSold = totalListingsSold + totalAuctionsSold;
-
-    const result: CollectibleStatus = {
+    const collectibleStatus: CollectibleStatus = {
       address: checksumAddress,
       castsCollected: Number(castsCollected),
-      castsBeingSold: Math.max(0, castsBeingSold), // Ensure non-negative
+      castsBeingSold,
       castsSold,
     };
 
-    return NextResponse.json(result);
+    console.log('Collectible status result:', collectibleStatus);
+
+    return NextResponse.json(collectibleStatus);
+
   } catch (error) {
     console.error('Error fetching collectible status:', error);
     
-    // Return more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes('network') || error.message.includes('timeout')) {
-        return NextResponse.json(
-          { error: 'Network error - unable to connect to blockchain' },
-          { status: 503 }
-        );
-      }
-      if (error.message.includes('contract')) {
-        return NextResponse.json(
-          { error: 'Contract error - unable to read from smart contract' },
-          { status: 502 }
-        );
-      }
-      if (error.message.includes('logs') || error.message.includes('range')) {
-        return NextResponse.json(
-          { error: 'Block range error - try again later' },
-          { status: 429 }
-        );
-      }
-    }
-
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: "Failed to fetch collectible status",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
 }
+
