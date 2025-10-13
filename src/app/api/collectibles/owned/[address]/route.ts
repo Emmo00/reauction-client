@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuctionContractAddress, getCoinbaseQLSchema } from "@/lib/constants";
-import { TransferEvent, OwnedCollectibles } from "@/types/collectible-status";
+import { TransferEvent, OwnedCollectibles, PaginationInfo } from "@/types/collectible-status";
 import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
 import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
 import { getChain, getRPCURL } from "@/lib/constants";
 import connectToDatabase from "@/lib/mongodb";
 import { OwnedCollectiblesCacheService } from "@/lib/cache/generic-cache";
 import auctionAbi from "@/abis/auction.json";
+
+const PER_PAGE = 12;
 
 // Create public client for blockchain interactions
 const publicClient = createPublicClient({
@@ -26,9 +28,14 @@ const auctionContract = getContract({
   client: publicClient,
 });
 
-export async function GET(_: NextRequest, { params }: { params: Promise<{ address: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ address: string }> }) {
   try {
     const { address } = await params;
+    const url = new URL(request.url);
+    
+    // Parse pagination parameters
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+    const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') || PER_PAGE.toString())));
 
     // Validate address format
     if (!isAddress(address)) {
@@ -38,18 +45,24 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
     const checksumAddress = getAddress(address);
     const normalizedAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
 
-    console.log("Fetching owned collectibles for address:", checksumAddress);
+    console.log(`Fetching owned collectibles for address: ${checksumAddress}, page: ${page}, perPage: ${perPage}`);
 
     // Connect to MongoDB for caching
     await connectToDatabase();
 
+    // Create cache key that includes pagination info
+    const cacheKey = `${checksumAddress}:page:${page}:perPage:${perPage}`;
+
     // Check cache first
-    console.log("Checking cache for address:", checksumAddress);
-    const cachedResult = await OwnedCollectiblesCacheService.get(checksumAddress);
+    console.log("Checking cache for key:", cacheKey);
+    const cachedResult = await OwnedCollectiblesCacheService.get(cacheKey);
     
     if (cachedResult) {
       console.log("Cache hit - returning cached data");
-      return NextResponse.json(cachedResult);
+      return NextResponse.json({
+        success: true,
+        data: { ...cachedResult, cached: true }
+      });
     }
 
     console.log("Cache miss - fetching fresh data from blockchain...");
@@ -144,29 +157,55 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
     }
 
     // Get all currently owned token IDs
-    const ownedTokenIds = Array.from(tokenOwnership.entries())
+    const allOwnedTokenIds = Array.from(tokenOwnership.entries())
       .filter(([, isOwned]) => isOwned)
       .map(([tokenId]) => tokenId)
       .sort((a, b) => parseInt(a) - parseInt(b)); // Sort numerically
 
-    console.log(`User ${checksumAddress} owns ${ownedTokenIds.length} collectibles`);
+    const totalItems = allOwnedTokenIds.length;
+    const totalPages = Math.ceil(totalItems / perPage);
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    
+    // Get paginated token IDs
+    const paginatedTokenIds = allOwnedTokenIds.slice(startIndex, endIndex);
+
+    console.log(`User ${checksumAddress} owns ${totalItems} collectibles total, showing ${paginatedTokenIds.length} on page ${page}`);
+
+    // Create pagination info
+    const pagination: PaginationInfo = {
+      page,
+      perPage,
+      totalItems,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    };
 
     const response: OwnedCollectibles = {
       address: checksumAddress,
-      tokenIds: ownedTokenIds,
-      count: ownedTokenIds.length,
+      tokenIds: paginatedTokenIds,
+      count: paginatedTokenIds.length,
+      pagination,
+      collectibleContract: collectibleContractAddress,
+      queryTime: new Date().toISOString(),
+      cached: false
     };
 
     // Cache the result (1 hour TTL since ownership can change)
-    console.log("Caching result for address:", checksumAddress);
-    await OwnedCollectiblesCacheService.set(checksumAddress, response, 1);
+    console.log("Caching result for key:", cacheKey);
+    await OwnedCollectiblesCacheService.set(cacheKey, response, 1);
 
-    return NextResponse.json(response);
+    return NextResponse.json({
+      success: true,
+      data: response
+    });
 
   } catch (error) {
     console.error("Error fetching owned collectibles:", error);
     return NextResponse.json(
       { 
+        success: false,
         error: error instanceof Error ? error.message : "Failed to fetch owned collectibles" 
       }, 
       { status: 500 }

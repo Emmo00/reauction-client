@@ -45,10 +45,23 @@ export interface TransferEvent {
   };
 }
 
+export interface PaginationInfo {
+  page: number;
+  perPage: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface OwnedCollectibles {
   address: string;
   tokenIds: string[];
   count: number;
+  pagination: PaginationInfo;
+  collectibleContract: string;
+  queryTime: string;
+  cached?: boolean;
 }
 
 export interface OwnedCollectiblesError {

@@ -38,3 +38,5 @@ If you are later instructed to create a UI component (e.g., AuctionCard, Listing
 2. Do **not include emojis or visual metaphors**.
 3. Use minimal, clean animations (e.g., fade-in, glass reflection shimmer).
 4. Keep the design flat and spatial (depth from blur + transparency, not colors).
+
+dont be making useless test components, if i want you to use new apis i'd tell you to integrate them into the application

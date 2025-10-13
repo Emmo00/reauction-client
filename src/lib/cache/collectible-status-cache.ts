@@ -2,8 +2,10 @@ import { CollectibleStatus } from '@/types/collectible-status';
 import { GenericCacheService } from './generic-cache';
 
 export class CollectibleStatusCacheService {
+  private static readonly PREFIX = 'collectible-status';
+
   static generateKey(address: string): string {
-    return `collectible-status-${address.toLowerCase()}`;
+    return `${this.PREFIX}:${address.toLowerCase()}`;
   }
 
   static async get(address: string): Promise<CollectibleStatus | null> {
@@ -11,10 +13,9 @@ export class CollectibleStatusCacheService {
     return GenericCacheService.get<CollectibleStatus>(key);
   }
 
-  static async set(address: string, data: CollectibleStatus): Promise<void> {
+  static async set(address: string, data: CollectibleStatus, ttlHours: number = 2): Promise<void> {
     const key = this.generateKey(address);
-    // Cache for 2 hours like before
-    return GenericCacheService.set(key, data, 2);
+    return GenericCacheService.set(key, data, ttlHours);
   }
 
   static async clear(address?: string): Promise<void> {
@@ -22,15 +23,7 @@ export class CollectibleStatusCacheService {
       const key = this.generateKey(address);
       return GenericCacheService.clear(key);
     } else {
-      return GenericCacheService.clear('collectible-status-*');
+      return GenericCacheService.clear(`${this.PREFIX}:*`);
     }
-  }
-
-  static async getStats(): Promise<{ totalEntries: number; validEntries: number }> {
-    const stats = await GenericCacheService.getStats();
-    return { 
-      totalEntries: stats.totalEntries, 
-      validEntries: stats.validEntries 
-    };
   }
 }
