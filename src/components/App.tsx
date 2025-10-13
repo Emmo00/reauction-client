@@ -41,7 +41,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="absolute px-4 bottom-8 mb:left-1/2 mb:-translate-x-1/2 md:relative md:top-1/2 md:left-auto md:transform-none md:-translate-y-1/2 mb-8 space-y-4 md:text-center">
+        <div className="absolute px-4 bottom-8 mb-8 space-y-4">
           <h1 className="text-balance font-sans text-5xl font-bold leading-tight tracking-tight text-white">
             Resell and Auction
             <br /> Your Cast

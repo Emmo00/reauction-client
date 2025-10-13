@@ -31,14 +31,18 @@ export default function ProfilePage() {
   }, []);
 
   // Get the user's wallet address from their FID
-  const { address: userAddress, loading: addressLoading, error: addressError } = useFarcasterAddress(
-    context?.user?.fid
-  );
+  const {
+    address: userAddress,
+    loading: addressLoading,
+    error: addressError,
+  } = useFarcasterAddress(context?.user?.fid);
 
   // Get the collectible status using the wallet address
-  const { status, loading: statusLoading, error: statusError } = useCollectibleStatus(
-    userAddress || undefined
-  );
+  const {
+    status,
+    loading: statusLoading,
+    error: statusError,
+  } = useCollectibleStatus(userAddress || undefined);
 
   const isLoading = addressLoading || statusLoading;
   const hasError = addressError || statusError;
@@ -66,27 +70,33 @@ export default function ProfilePage() {
             <h2 className="text-xl font-bold text-foreground">{context?.user?.displayName}</h2>
             <p className="text-sm text-muted-foreground mb-4">@{context?.user?.username}</p>
 
-            <div className="grid grid-cols-3 gap-6 w-full max-w-sm mb-4">
+            <div className="grid grid-cols-4 gap-2 w-full max-w-sm mb-4">
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {isLoading ? "..." : hasError ? "?" : (status?.castsCollected ?? 0)}
+                  {isLoading ? "..." : hasError ? "?" : status?.castsCollected ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Collected</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLoading ? "..." : hasError ? "?" : status?.castsOwned ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Collection</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {isLoading ? "..." : hasError ? "?" : (status?.castsBeingSold ?? 0)}
+                  {isLoading ? "..." : hasError ? "?" : status?.castsBeingSold ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Selling</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {isLoading ? "..." : hasError ? "?" : (status?.castsSold ?? 0)}
+                  {isLoading ? "..." : hasError ? "?" : status?.castsSold ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Sold</p>
               </div>
             </div>
-            
+
             {/* Debug info - remove in production */}
             {(addressError || statusError) && (
               <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded">

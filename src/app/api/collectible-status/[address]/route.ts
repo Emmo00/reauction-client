@@ -4,6 +4,8 @@ import { CollectibleStatus, SqlApiResponse } from "@/types/collectible-status";
 import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
 import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
 import { getChain, getRPCURL } from "@/lib/constants";
+import connectToDatabase from "@/lib/mongodb";
+import { CollectibleStatusCacheService } from "@/lib/cache/collectible-status-cache";
 import auctionAbi from "@/abis/auction.json";
 import collectibleAbi from "@/abis/collectible.json";
 
@@ -36,6 +38,20 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
 
     const checksumAddress = getAddress(address);
     const lowerAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
+
+    // Connect to MongoDB
+    await connectToDatabase();
+
+    // Check cache first
+    console.log("Checking cache for address:", checksumAddress);
+    const cachedResult = await CollectibleStatusCacheService.get(checksumAddress);
+    
+    if (cachedResult) {
+      console.log("Cache hit - returning cached data");
+      return NextResponse.json(cachedResult);
+    }
+
+    console.log("Cache miss - fetching fresh data");
 
     // Get environment-specific values
     const auctionContractAddress = getAuctionContractAddress().toLowerCase();
@@ -136,7 +152,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
 
     // Query the auction contract to get the collectible address
     console.log("Querying auction contract for collectible address...");
-    let collectibleAddress = await auctionContract.read.collectible();
+    let collectibleAddress = await auctionContract.read.collectible() as unknown as string;
 
     // Get the collectible contract instance
     const collectibleContract = getContract({
@@ -147,7 +163,19 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
 
     let castsOwned = await collectibleContract.read.balanceOf([checksumAddress]);
 
-    let castsCollected = 0;
+    // Query for Transfer events to calculate castsCollected (minted to this address)
+    const mintedQuery = `
+      SELECT 
+        COUNT(*) as mint_count
+      FROM ${schema}.events
+      WHERE address = '${collectibleAddress.toLowerCase()}'
+        AND event_name = 'Transfer'
+        AND parameters['to'] = '${lowerAddress}'
+        AND parameters['from'] = '0x0000000000000000000000000000000000000000'
+    `;
+
+    const mintedResult = await executeCoinbaseqlQuery(mintedQuery);
+    let castsCollected = Number(mintedResult.result?.[0]?.mint_count || 0);
 
     const collectibleStatus: CollectibleStatus = {
       address: checksumAddress,
@@ -156,6 +184,11 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
       castsBeingSold,
       castsSold,
     };
+
+    // Cache the result (async - don't wait for it to complete)
+    CollectibleStatusCacheService.set(checksumAddress, collectibleStatus).catch(error => {
+      console.error("Failed to cache collectible status:", error);
+    });
 
     console.log("Collectible status result:", collectibleStatus);
 
