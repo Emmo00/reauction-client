@@ -4,7 +4,6 @@ import { ChevronLeft, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/bottom-nav";
 import { useState, useEffect } from "react";
 import sdk from "@farcaster/miniapp-sdk";

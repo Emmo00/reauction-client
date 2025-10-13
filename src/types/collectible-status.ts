@@ -32,3 +32,27 @@ export interface SqlApiResponse {
     [key: string]: any; // Allow additional properties
   }>;
 }
+
+// Types for owned collectibles API
+export interface TransferEvent {
+  block_number: string;
+  transaction_hash: string;
+  log_index: string;
+  parameters: {
+    from: string;
+    to: string;
+    tokenId: string;
+  };
+}
+
+export interface OwnedCollectibles {
+  address: string;
+  tokenIds: string[];
+  count: number;
+}
+
+export interface OwnedCollectiblesError {
+  error: string;
+}
+
+export type OwnedCollectiblesResponse = OwnedCollectibles | OwnedCollectiblesError;
