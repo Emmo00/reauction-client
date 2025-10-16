@@ -38,16 +38,20 @@ export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps
       // Check if it's an image or video based on URL extension or content type
       const isImage = embed.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ||
                      embed.metadata?.content_type?.startsWith('image/');
-      const isVideo = embed.url.match(/\.(mp4|webm|mov)$/i) ||
-                     embed.metadata?.content_type?.startsWith('video/');
+      const isVideo = embed.url.match(/\.(mp4|webm|mov|m3u8)$/i) ||
+                     embed.metadata?.content_type?.startsWith('video/') ||
+                     embed.metadata?.content_type === 'application/vnd.apple.mpegurl' ||
+                     embed.metadata?.content_type === 'application/x-mpegURL';
       
       return isImage || isVideo;
     });
 
     // Determine if it's a video
     const isVideo = backgroundMedia && isUrlEmbed(backgroundMedia) && (
-      backgroundMedia.url?.match(/\.(mp4|webm|mov)$/i) ||
-      backgroundMedia.metadata?.content_type?.startsWith('video/')
+      backgroundMedia.url?.match(/\.(mp4|webm|mov|m3u8)$/i) ||
+      backgroundMedia.metadata?.content_type?.startsWith('video/') ||
+      backgroundMedia.metadata?.content_type === 'application/vnd.apple.mpegurl' ||
+      backgroundMedia.metadata?.content_type === 'application/x-mpegURL'
     );
 
     // Fallback background color based on cast hash or author FID
@@ -60,7 +64,33 @@ export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps
       // Use last character of hash for more distribution
       const index = parseInt(hash.slice(-1), 16) % colors.length;
       return colors[index];
-    };    // Calculate responsive font sizes based on container size
+    };
+
+    // Generate meaningful fallback text
+    const getDisplayText = () => {
+      if (cleanText) return cleanText;
+      
+      // If no text but has media, create descriptive text
+      if (backgroundMedia && isUrlEmbed(backgroundMedia)) {
+        if (isVideo) {
+          return 'Video Cast';
+        } else {
+          return 'Image Cast';
+        }
+      }
+      
+      // If posted in a channel, use channel name
+      if (castData.channel?.name) {
+        return `Cast from /${castData.channel.name}`;
+      }
+      
+      // Default fallback
+      return 'Farcaster Cast';
+    };
+
+    const displayText = getDisplayText();
+
+    // Calculate responsive font sizes based on container size
     const baseFontSize = (size / 600) * 24;
     const displayNameSize = (size / 600) * 20;
     const usernameSize = (size / 600) * 15;
@@ -149,7 +179,7 @@ export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps
             maxWidth: '100%',
           }}
         >
-          {cleanText || 'Untitled Cast'}
+          {displayText || 'Untitled Cast'}
         </div>
 
         {/* Footer with user info */}
