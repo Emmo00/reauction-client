@@ -7,7 +7,7 @@ export function useCollectibleStatus(address?: string) {
   const { address: connectedAddress } = useAccount();
   
   // Use provided address or fall back to connected wallet address
-  const targetAddress = address || connectedAddress;
+  const targetAddress = address;
 
   const {
     data: status,

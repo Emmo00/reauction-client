@@ -1,5 +1,7 @@
 // Type definitions for the collectible status API
 
+import { CastResponse } from "@neynar/nodejs-sdk/build/api";
+
 export interface CollectibleStatusError {
   error: string;
 }
@@ -57,6 +59,7 @@ export interface PaginationInfo {
 export interface OwnedCollectibles {
   address: string;
   tokenIds: string[];
+  casts: CastResponse[];
   count: number;
   pagination: PaginationInfo;
   collectibleContract: string;
@@ -68,4 +71,4 @@ export interface OwnedCollectiblesError {
   error: string;
 }
 
-export type OwnedCollectiblesResponse = OwnedCollectibles | OwnedCollectiblesError;
+export type OwnedCollectiblesResponse = { data: OwnedCollectibles } | OwnedCollectiblesError;

@@ -76,12 +76,17 @@ export async function sendNeynarMiniAppNotification({
 }
 
 export async function getFarcasterCastByHash(castHash: string) {
-  const client = getNeynarClient();
+  try {
+    const client = getNeynarClient();
 
-  const cast = await client.lookupCastByHashOrWarpcastUrl({
-    identifier: castHash,
-    type: "hash",
-  });
+    const cast = await client.lookupCastByHashOrWarpcastUrl({
+      identifier: castHash,
+      type: "hash",
+    });
 
-  return cast;
+    return cast;
+  } catch (error) {
+    console.error("Error fetching Farcaster cast:", error);
+    return null;
+  }
 }

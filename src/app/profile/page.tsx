@@ -8,43 +8,59 @@ import { BottomNav } from "@/components/bottom-nav";
 import { useState, useEffect } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { MiniAppContext } from "@farcaster/miniapp-core/dist/context";
-import { useFarcasterAddress } from "@/hooks/useFarcasterAddress";
-import { useCollectibleStatus } from "@/hooks/useCollectibleStatus";
-
-const collectibles = [
-  { id: 1, image: "/abstract-nft-purple.png", name: "Purple Abstract", price: "12.5" },
-  { id: 2, image: "/digital-art-collectible-blue.jpg", name: "Blue Digital", price: "8.2" },
-  { id: 3, image: "/nft-collectible-green.jpg", name: "Green NFT", price: "15.8" },
-  { id: 4, image: "/crypto-art-orange.jpg", name: "Orange Crypto", price: "22.1" },
-];
+import { useFarcasterAddress } from "@/queries/useFarcasterAddress";
+import { useCollectibleStatus } from "@/queries/useCollectibleStatus";
+import { useOwnedCollectibles } from "@/queries/casts";
+import { CastResponse } from "@neynar/nodejs-sdk/build/api";
+import { CollectibleImage } from "@/components/collectible-image";
 
 export default function ProfilePage() {
   const [context, setContext] = useState<MiniAppContext | null>(null);
-
-  useEffect(() => {
-    async function waitForContext() {
-      setContext(await sdk.context);
-    }
-
-    waitForContext();
-  }, []);
+  const [collectibles, setCollectibles] = useState<CastResponse[]>([]);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(12);
 
   // Get the user's wallet address from their FID
   const {
-    address: userAddress,
-    loading: addressLoading,
+    data: userAddressData,
+    isLoading: addressLoading,
     error: addressError,
   } = useFarcasterAddress(context?.user?.fid);
-
   // Get the collectible status using the wallet address
   const {
     status,
     loading: statusLoading,
     error: statusError,
-  } = useCollectibleStatus(userAddress || undefined);
+  } = useCollectibleStatus(userAddressData?.address || undefined);
+  const {
+    data: collectiblesData,
+    isLoading: collectiblesLoading,
+    error: collectiblesError,
+  } = useOwnedCollectibles({ address: userAddressData?.address ?? null, page, perPage });
 
-  const isLoading = addressLoading || statusLoading;
-  const hasError = addressError || statusError;
+  useEffect(() => {
+    async function waitForContext() {
+      setContext({ user: { fid: 891361 } } as MiniAppContext);
+      setContext(await sdk.context);
+    }
+    waitForContext();
+  }, []);
+
+  console.log("user address", userAddressData);
+
+  useEffect(() => {
+    if (collectiblesData && "data" in collectiblesData) {
+      setCollectibles([
+        ...collectibles,
+        ...(collectiblesData.data.casts || []).filter(
+          (c) => !collectibles.some((existing) => existing.cast.hash === c.cast.hash)
+        ),
+      ]);
+    }
+  }, [collectiblesData]);
+
+  const isLoading = addressLoading || statusLoading || collectiblesLoading;
+  const hasError = addressError || statusError || collectiblesError;
   return (
     <>
       <div className="min-h-screen bg-background pb-32">
@@ -99,9 +115,9 @@ export default function ProfilePage() {
             {/* Debug info - remove in production */}
             {(addressError || statusError) && (
               <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded">
-                {addressError && <div>Address Error: {addressError}</div>}
+                {addressError && <div>Address Error: {addressError.message}</div>}
                 {statusError && <div>Status Error: {statusError}</div>}
-                {userAddress && <div>Address: {userAddress}</div>}
+                {userAddressData && <div>Address: {userAddressData.address}</div>}
               </div>
             )}
           </div>
@@ -115,18 +131,16 @@ export default function ProfilePage() {
             <TabsContent value="collected" className="mt-4">
               <div className="grid grid-cols-2 gap-3">
                 {collectibles.map((item) => (
-                  <Link key={item.id} href={`/collectible/${item.id}`}>
+                  <Link key={item.cast.hash} href={`/collectible/${item.cast.hash}`}>
                     <div className="overflow-hidden rounded-2xl bg-card">
                       <div className="aspect-square overflow-hidden">
-                        <img
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
+                        <CollectibleImage cast={item} />
                       </div>
                       <div className="p-3">
-                        <p className="text-sm font-semibold text-foreground">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">{item.price} USDC</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          #{Number(item.cast.hash).toString().substring(0, 6)} by{" "}
+                          {item.cast.author.display_name}
+                        </p>
                       </div>
                     </div>
                   </Link>

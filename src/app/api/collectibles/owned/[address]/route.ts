@@ -7,6 +7,7 @@ import { getChain, getRPCURL } from "@/lib/constants";
 import connectToDatabase from "@/lib/mongodb";
 import { OwnedCollectiblesCacheService } from "@/lib/cache/generic-cache";
 import auctionAbi from "@/abis/auction.json";
+import { getFarcasterCastByHash } from "@/lib/neynar";
 
 const PER_PAGE = 12;
 
@@ -28,14 +29,20 @@ const auctionContract = getContract({
   client: publicClient,
 });
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ address: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ address: string }> }
+) {
   try {
     const { address } = await params;
     const url = new URL(request.url);
-    
+
     // Parse pagination parameters
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') || PER_PAGE.toString())));
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+    const perPage = Math.min(
+      50,
+      Math.max(1, parseInt(url.searchParams.get("perPage") || PER_PAGE.toString()))
+    );
 
     // Validate address format
     if (!isAddress(address)) {
@@ -45,7 +52,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const checksumAddress = getAddress(address);
     const normalizedAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
 
-    console.log(`Fetching owned collectibles for address: ${checksumAddress}, page: ${page}, perPage: ${perPage}`);
+    console.log(
+      `Fetching owned collectibles for address: ${checksumAddress}, page: ${page}, perPage: ${perPage}`
+    );
 
     // Connect to MongoDB for caching
     await connectToDatabase();
@@ -56,12 +65,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Check cache first
     console.log("Checking cache for key:", cacheKey);
     const cachedResult = await OwnedCollectiblesCacheService.get(cacheKey);
-    
+
     if (cachedResult) {
       console.log("Cache hit - returning cached data");
       return NextResponse.json({
         success: true,
-        data: { ...cachedResult, cached: true }
+        data: { ...cachedResult, cached: true },
       });
     }
 
@@ -69,7 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Get the collectible contract address from the auction contract
     console.log("Fetching collectible contract address from auction contract...");
-    const collectibleContractAddress = await auctionContract.read.collectible() as `0x${string}`;
+    const collectibleContractAddress = (await auctionContract.read.collectible()) as `0x${string}`;
     const normalizedCollectibleAddress = collectibleContractAddress.toLowerCase();
 
     console.log("Collectible contract address:", collectibleContractAddress);
@@ -112,13 +121,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const outgoingResponse = await executeCoinbaseqlQuery(outgoingTransfersQuery);
     const outgoingTransfers = (outgoingResponse.result || []) as TransferEvent[];
 
-    console.log(`Found ${incomingTransfers.length} incoming and ${outgoingTransfers.length} outgoing transfers`);
+    console.log(
+      `Found ${incomingTransfers.length} incoming and ${outgoingTransfers.length} outgoing transfers`
+    );
 
     // Validate that we have valid transfer events
     if (!Array.isArray(incomingTransfers) || !Array.isArray(outgoingTransfers)) {
       console.error("Invalid response format from CoinbaSeQL API");
       return NextResponse.json(
-        { error: "Invalid response format from blockchain data API" }, 
+        { error: "Invalid response format from blockchain data API" },
         { status: 500 }
       );
     }
@@ -128,8 +139,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Process all events chronologically
     const allEvents = [
-      ...incomingTransfers.map(event => ({ ...event, type: 'incoming' as const })),
-      ...outgoingTransfers.map(event => ({ ...event, type: 'outgoing' as const }))
+      ...incomingTransfers.map((event) => ({ ...event, type: "incoming" as const })),
+      ...outgoingTransfers.map((event) => ({ ...event, type: "outgoing" as const })),
     ].sort((a, b) => {
       // Sort by block number first, then by log index
       const blockDiff = parseInt(a.block_number) - parseInt(b.block_number);
@@ -146,8 +157,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       const tokenId = event.parameters.tokenId;
-      
-      if (event.type === 'incoming') {
+
+      if (event.type === "incoming") {
         // User received this token
         tokenOwnership.set(tokenId, true);
       } else {
@@ -166,11 +177,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const totalPages = Math.ceil(totalItems / perPage);
     const startIndex = (page - 1) * perPage;
     const endIndex = startIndex + perPage;
-    
+
     // Get paginated token IDs
     const paginatedTokenIds = allOwnedTokenIds.slice(startIndex, endIndex);
 
-    console.log(`User ${checksumAddress} owns ${totalItems} collectibles total, showing ${paginatedTokenIds.length} on page ${page}`);
+    console.log(
+      `User ${checksumAddress} owns ${totalItems} collectibles total, showing ${paginatedTokenIds.length} on page ${page}`
+    );
+
+    // fetch cast object based on token IDs (tokenid == uint(castHash))
+    const castPromises = [];
+    for (const tokenId of paginatedTokenIds) {
+      // Convert tokenId to hex hash for cast lookup
+      const castHash = `0x${BigInt(tokenId).toString(16)}`;
+      castPromises.push(getFarcasterCastByHash(castHash));
+    }
+
+    // Wait for all cast fetches to complete
+    const casts = (await Promise.all(castPromises)).filter((cast) => cast !== null);
 
     // Create pagination info
     const pagination: PaginationInfo = {
@@ -179,17 +203,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       totalItems,
       totalPages,
       hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1
+      hasPreviousPage: page > 1,
     };
 
     const response: OwnedCollectibles = {
       address: checksumAddress,
       tokenIds: paginatedTokenIds,
+      casts,
       count: paginatedTokenIds.length,
       pagination,
       collectibleContract: collectibleContractAddress,
       queryTime: new Date().toISOString(),
-      cached: false
+      cached: false,
     };
 
     // Cache the result (1 hour TTL since ownership can change)
@@ -198,16 +223,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({
       success: true,
-      data: response
+      data: response,
     });
-
   } catch (error) {
     console.error("Error fetching owned collectibles:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch owned collectibles" 
-      }, 
+        error: error instanceof Error ? error.message : "Failed to fetch owned collectibles",
+      },
       { status: 500 }
     );
   }
