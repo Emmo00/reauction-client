@@ -13,6 +13,8 @@ import { useCollectibleStatus } from "@/queries/useCollectibleStatus";
 import { useOwnedCollectibles } from "@/queries/casts";
 import { CastResponse } from "@neynar/nodejs-sdk/build/api";
 import { CollectibleImage } from "@/components/collectible-image";
+import { useAccount, useConnect } from "wagmi";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
 export default function ProfilePage() {
   const [context, setContext] = useState<MiniAppContext | null>(null);
@@ -20,33 +22,31 @@ export default function ProfilePage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
 
-  // Get the user's wallet address from their FID
-  const {
-    data: userAddressData,
-    isLoading: addressLoading,
-    error: addressError,
-  } = useFarcasterAddress(context?.user?.fid);
+  const { address: userAddressData, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+
+  if (!isConnected) {
+    connect({ connector: farcasterFrame() });
+  }
+
   // Get the collectible status using the wallet address
   const {
     status,
     loading: statusLoading,
     error: statusError,
-  } = useCollectibleStatus(userAddressData?.address || undefined);
+  } = useCollectibleStatus(userAddressData || undefined);
   const {
     data: collectiblesData,
     isLoading: collectiblesLoading,
     error: collectiblesError,
-  } = useOwnedCollectibles({ address: userAddressData?.address ?? null, page, perPage });
+  } = useOwnedCollectibles({ address: userAddressData ?? null, page, perPage });
 
   useEffect(() => {
     async function waitForContext() {
-      setContext({ user: { fid: 891361 } } as MiniAppContext);
       setContext(await sdk.context);
     }
     waitForContext();
   }, []);
-
-  console.log("user address", userAddressData);
 
   useEffect(() => {
     if (collectiblesData && "data" in collectiblesData) {
@@ -59,8 +59,8 @@ export default function ProfilePage() {
     }
   }, [collectiblesData]);
 
-  const isLoading = addressLoading || statusLoading || collectiblesLoading;
-  const hasError = addressError || statusError || collectiblesError;
+  const isLoading = statusLoading || collectiblesLoading;
+  const hasError = statusError || collectiblesError;
   return (
     <>
       <div className="min-h-screen bg-background pb-32">
@@ -113,11 +113,10 @@ export default function ProfilePage() {
             </div>
 
             {/* Debug info - remove in production */}
-            {(addressError || statusError) && (
+            {statusError && (
               <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded">
-                {addressError && <div>Address Error: {addressError.message}</div>}
                 {statusError && <div>Status Error: {statusError}</div>}
-                {userAddressData && <div>Address: {userAddressData.address}</div>}
+                {userAddressData && <div>Address: {userAddressData}</div>}
               </div>
             )}
           </div>
@@ -133,12 +132,10 @@ export default function ProfilePage() {
                 {collectibles.map((item) => (
                   <Link key={item.cast.hash} href={`/collectible/${item.cast.hash}`}>
                     <div className="overflow-hidden rounded-2xl bg-card">
-                      <div className="aspect-square overflow-hidden">
-                        <CollectibleImage cast={item} />
-                      </div>
+                      <CollectibleImage cast={item} size={167} />
                       <div className="p-3">
                         <p className="text-sm font-semibold text-foreground">
-                          #{Number(item.cast.hash).toString().substring(0, 6)} by{" "}
+                          #{BigInt(item.cast.hash).toString().substring(0, 6)} by{" "}
                           {item.cast.author.display_name}
                         </p>
                       </div>

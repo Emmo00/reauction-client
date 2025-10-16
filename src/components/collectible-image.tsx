@@ -9,6 +9,7 @@ interface CollectibleImageProps {
 
 // Type guard to check if embed is a URL embed (not a cast embed)
 function isUrlEmbed(embed: any): embed is { url: string; metadata?: { content_type?: string; [key: string]: any } } {
+  console.log('Embed:', embed);
   return embed && typeof embed === 'object' && typeof embed.url === 'string';
 }
 
@@ -61,12 +62,12 @@ export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps
       return colors[index];
     };    // Calculate responsive font sizes based on container size
     const baseFontSize = (size / 600) * 24;
-    const displayNameSize = (size / 600) * 18;
+    const displayNameSize = (size / 600) * 20;
     const usernameSize = (size / 600) * 15;
-    const padding = (size / 600) * 40;
+    const padding = (size / 600) * 30;
     const footerPadding = (size / 600) * 20;
-    const avatarSize = (size / 600) * 52;
-    const avatarMargin = (size / 600) * 14;
+    const avatarSize = (size / 600) * 60;
+    const avatarMargin = (size / 600) * 10;
 
     return (
       <div 
