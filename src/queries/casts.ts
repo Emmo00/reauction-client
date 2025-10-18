@@ -25,7 +25,7 @@ export function useOwnedCollectibles({
 }
 
 export function useCollectible(hash: string | null) {
-  return useQuery<{ data: CastResponse } | { error: string }>({
+  return useQuery<CastResponse | { error: string }>({
     enabled: !!hash,
     queryKey: ["collectible", hash],
     queryFn: async () => {

@@ -1,12 +1,13 @@
 import { type AccountAssociation } from "@farcaster/miniapp-core/src/manifest";
+import { createPublicClient, http } from "viem";
 import { base, baseSepolia } from "viem/chains";
 
-export const isProduction = process.env.NODE_ENV === 'production';
+export const isProduction = process.env.NODE_ENV === "production";
 
 export const AUCTION_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
 export const AUCTION_CONTRACT_ADDRESS_SEPOLIA = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
-
-
+export const COLLECTIBLE_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
+export const COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA = "0xf73Ea33263307A45d73B91a51d9eB99d185025Bc";
 // Blockchain configuration
 export const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
 export const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
@@ -14,24 +15,40 @@ export const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "https:/
 /**
  * Get the appropriate auction contract address based on environment
  */
-export const getAuctionContractAddress = (): string =>  isProduction
-    ? AUCTION_CONTRACT_ADDRESS 
-    : AUCTION_CONTRACT_ADDRESS_SEPOLIA;
+export const getAuctionContractAddress = (): string =>
+  isProduction ? AUCTION_CONTRACT_ADDRESS : AUCTION_CONTRACT_ADDRESS_SEPOLIA;
+
+/**
+ * Get the appropriate collectible contract address based on environment
+ */
+export const getCollectibleContractAddress = (): string =>
+  isProduction ? COLLECTIBLE_CONTRACT_ADDRESS : COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA;
 
 /**
  * Get the appropriate CoinbaSeQL database schema based on environment
  */
-export const getCoinbaseQLSchema = (): string =>  isProduction ? 'base' : 'base_sepolia';
+export const getCoinbaseQLSchema = (): string => (isProduction ? "base" : "base_sepolia");
 
 /**
  * Get RPC url based on environment
  */
-export const getRPCURL = (): string => isProduction? BASE_RPC_URL : BASE_SEPOLIA_RPC_URL;
+export const getRPCURL = (): string => (isProduction ? BASE_RPC_URL : BASE_SEPOLIA_RPC_URL);
 
 /**
  * Get chain
  */
-export const getChain = () => isProduction ? base : baseSepolia;
+export const getChain = () => (isProduction ? base : baseSepolia);
+
+export const getPublicClient = () =>
+  createPublicClient({
+    chain: getChain(),
+    transport: http(getRPCURL(), {
+      batch: true,
+      timeout: 30000, // 30 second timeout
+      retryCount: 3,
+      retryDelay: 1000,
+    }),
+  });
 
 /**
  * Application constants and configuration values.

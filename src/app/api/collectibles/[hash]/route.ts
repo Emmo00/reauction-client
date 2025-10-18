@@ -12,7 +12,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ hash: 
       return NextResponse.json({ error: "Collectible not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: cast }, { status: 200 });
+    return NextResponse.json(cast, { status: 200 });
   } catch (error) {
     console.error("Error fetching collectible:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

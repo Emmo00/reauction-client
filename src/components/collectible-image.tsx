@@ -9,7 +9,6 @@ interface CollectibleImageProps {
 
 // Type guard to check if embed is a URL embed (not a cast embed)
 function isUrlEmbed(embed: any): embed is { url: string; metadata?: { content_type?: string; [key: string]: any } } {
-  console.log('Embed:', embed);
   return embed && typeof embed === 'object' && typeof embed.url === 'string';
 }
 

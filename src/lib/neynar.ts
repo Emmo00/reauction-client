@@ -90,3 +90,23 @@ export async function getFarcasterCastByHash(castHash: string) {
     return null;
   }
 }
+
+export async function getFarcasterUserByWalletAddress(address: string) {
+  try {
+    const client = getNeynarClient();
+
+    const response = await client.fetchBulkUsersByEthOrSolAddress({ addresses: [address] });
+
+    // Response structure: { "address": [user1, user2, ...] }
+    // Get the first address's user array and return the first user
+    const addressKey = Object.keys(response)[0];
+    if (addressKey && response[addressKey] && response[addressKey].length > 0) {
+      return response[addressKey][0]; // Return first user for the first address
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching Farcaster user by wallet address:", error);
+    return null;
+  }
+}

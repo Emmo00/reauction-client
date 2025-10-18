@@ -1,31 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuctionContractAddress, getCoinbaseQLSchema } from "@/lib/constants";
-import { CollectibleStatus, SqlApiResponse } from "@/types/collectible-status";
+import {
+  getAuctionContractAddress,
+  getCoinbaseQLSchema,
+  getCollectibleContractAddress,
+  getPublicClient,
+} from "@/lib/constants";
+import { CollectibleStatus } from "@/types/collectible-status";
 import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
-import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
-import { getChain, getRPCURL } from "@/lib/constants";
+import { getContract, getAddress, isAddress } from "viem";
 import connectToDatabase from "@/lib/mongodb";
 import { CollectibleStatusCacheService } from "@/lib/cache/collectible-status-cache";
-import auctionAbi from "@/abis/auction.json";
 import collectibleAbi from "@/abis/collectible.json";
-
-// Create public client for blockchain interactions using HTTP
-const publicClient = createPublicClient({
-  chain: getChain(),
-  transport: http(getRPCURL(), {
-    batch: true,
-    timeout: 30000, // 30 second timeout
-    retryCount: 3,
-    retryDelay: 1000,
-  }),
-});
-
-// Get the auction contract instance
-const auctionContract = getContract({
-  address: getAuctionContractAddress() as `0x${string}`,
-  abi: auctionAbi,
-  client: publicClient,
-});
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ address: string }> }) {
   try {
@@ -45,7 +30,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
     // Check cache first
     console.log("Checking cache for address:", checksumAddress);
     const cachedResult = await CollectibleStatusCacheService.get(checksumAddress);
-    
+
     if (cachedResult) {
       console.log("Cache hit - returning cached data");
       return NextResponse.json(cachedResult);
@@ -152,13 +137,13 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
 
     // Query the auction contract to get the collectible address
     console.log("Querying auction contract for collectible address...");
-    let collectibleAddress = await auctionContract.read.collectible() as unknown as string;
+    let collectibleAddress = getCollectibleContractAddress();
 
     // Get the collectible contract instance
     const collectibleContract = getContract({
       address: collectibleAddress as `0x${string}`,
       abi: collectibleAbi,
-      client: publicClient,
+      client: getPublicClient(),
     });
 
     let castsOwned = await collectibleContract.read.balanceOf([checksumAddress]);
@@ -186,7 +171,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
     };
 
     // Cache the result (async - don't wait for it to complete)
-    CollectibleStatusCacheService.set(checksumAddress, collectibleStatus).catch(error => {
+    CollectibleStatusCacheService.set(checksumAddress, collectibleStatus).catch((error) => {
       console.error("Failed to cache collectible status:", error);
     });
 
