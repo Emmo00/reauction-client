@@ -1,13 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface GenericCache<T = any> extends Document {
+export interface Cache<T = any> extends Document {
   key: string;
   data: T;
   createdAt: Date;
   expiresAt: Date;
 }
 
-const GenericCacheSchema = new Schema<GenericCache>({
+const CacheSchema = new Schema<Cache>({
   key: {
     type: String,
     required: true,
@@ -30,19 +30,19 @@ const GenericCacheSchema = new Schema<GenericCache>({
 });
 
 // Create compound index for efficient queries
-GenericCacheSchema.index({ key: 1, expiresAt: 1 });
+CacheSchema.index({ key: 1, expiresAt: 1 });
 
-export const GenericCacheModel = 
-  mongoose.models.GenericCache || 
-  mongoose.model<GenericCache>('GenericCache', GenericCacheSchema);
+export const CacheModel = 
+  mongoose.models.Cache || 
+  mongoose.model<Cache>('Cache', CacheSchema);
 
-export class GenericCacheService {
+export class CacheService {
   /**
    * Get cached data by key
    */
   static async get<T>(key: string): Promise<T | null> {
     try {
-      const cached = await GenericCacheModel.findOne({
+      const cached = await CacheModel.findOne({
         key,
         expiresAt: { $gt: new Date() }, // Ensure not expired
       });
@@ -71,7 +71,7 @@ export class GenericCacheService {
     try {
       const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
 
-      await GenericCacheModel.findOneAndUpdate(
+      await CacheModel.findOneAndUpdate(
         { key },
         {
           key,
@@ -103,10 +103,10 @@ export class GenericCacheService {
           ? { key: { $regex: keyOrPattern.replace(/\*/g, '.*') } }
           : { key: keyOrPattern };
         
-        const result = await GenericCacheModel.deleteMany(query);
+        const result = await CacheModel.deleteMany(query);
         console.log(`Cleared ${result.deletedCount} cache entries for pattern: ${keyOrPattern}`);
       } else {
-        const result = await GenericCacheModel.deleteMany({});
+        const result = await CacheModel.deleteMany({});
         console.log(`Cleared all ${result.deletedCount} cache entries`);
       }
     } catch (error) {
@@ -123,8 +123,8 @@ export class GenericCacheService {
     expiredEntries: number;
   }> {
     try {
-      const totalEntries = await GenericCacheModel.countDocuments();
-      const validEntries = await GenericCacheModel.countDocuments({
+      const totalEntries = await CacheModel.countDocuments();
+      const validEntries = await CacheModel.countDocuments({
         expiresAt: { $gt: new Date() },
       });
       const expiredEntries = totalEntries - validEntries;
@@ -169,20 +169,20 @@ export class OwnedCollectiblesCacheService {
 
   static async get(address: string) {
     const key = this.generateKey(address);
-    return GenericCacheService.get(key);
+    return CacheService.get(key);
   }
 
   static async set(address: string, data: any, ttlHours: number = 1) {
     const key = this.generateKey(address);
-    return GenericCacheService.set(key, data, ttlHours);
+    return CacheService.set(key, data, ttlHours);
   }
 
   static async clear(address?: string) {
     if (address) {
       const key = this.generateKey(address);
-      return GenericCacheService.clear(key);
+      return CacheService.clear(key);
     } else {
-      return GenericCacheService.clear('owned-collectibles-*');
+      return CacheService.clear('owned-collectibles-*');
     }
   }
 }

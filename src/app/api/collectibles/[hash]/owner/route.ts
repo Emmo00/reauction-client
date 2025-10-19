@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFarcasterUserByWalletAddress } from "@/lib/neynar";
-import { getPublicClient } from "@/lib/constants";
+import { getCollectibleContractAddress, getPublicClient } from "@/lib/constants";
 import collectibleAbi from "@/abis/collectible.json";
 import { getContract } from "viem";
 import { getAuctionContractAddress } from "@/lib/constants";
@@ -15,7 +15,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ hash: 
 
     // Get the collectible contract
     const collectibleContract = getContract({
-      address: getAuctionContractAddress() as `0x${string}`,
+      address: getCollectibleContractAddress() as `0x${string}`,
       abi: collectibleAbi,
       client,
     });

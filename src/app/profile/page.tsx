@@ -25,9 +25,12 @@ export default function ProfilePage() {
   const { address: userAddressData, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
 
-  if (!isConnected) {
-    connect({ connector: farcasterFrame() });
-  }
+  // Auto-connect to Farcaster wallet
+  useEffect(() => {
+    if (!isConnected) {
+      connect({ connector: farcasterFrame() });
+    }
+  }, [isConnected, connect]);
 
   // Get the collectible status using the wallet address
   const {
@@ -50,12 +53,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (collectiblesData && "data" in collectiblesData) {
-      setCollectibles([
-        ...collectibles,
-        ...(collectiblesData.data.casts || []).filter(
-          (c) => !collectibles.some((existing) => existing.cast.hash === c.cast.hash)
-        ),
-      ]);
+      // Reset collectibles when new data comes in (for profile page, we want to show current page data)
+      setCollectibles(collectiblesData.data.casts || []);
     }
   }, [collectiblesData]);
 

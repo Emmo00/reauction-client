@@ -1,5 +1,5 @@
 import { CollectibleStatus } from '@/types/collectible-status';
-import { GenericCacheService } from './generic-cache';
+import { CacheService } from './cache';
 
 export class CollectibleStatusCacheService {
   private static readonly PREFIX = 'collectible-status';
@@ -10,20 +10,20 @@ export class CollectibleStatusCacheService {
 
   static async get(address: string): Promise<CollectibleStatus | null> {
     const key = this.generateKey(address);
-    return GenericCacheService.get<CollectibleStatus>(key);
+    return CacheService.get<CollectibleStatus>(key);
   }
 
   static async set(address: string, data: CollectibleStatus, ttlHours: number = 2): Promise<void> {
     const key = this.generateKey(address);
-    return GenericCacheService.set(key, data, ttlHours);
+    return CacheService.set(key, data, ttlHours);
   }
 
   static async clear(address?: string): Promise<void> {
     if (address) {
       const key = this.generateKey(address);
-      return GenericCacheService.clear(key);
+      return CacheService.clear(key);
     } else {
-      return GenericCacheService.clear(`${this.PREFIX}:*`);
+      return CacheService.clear(`${this.PREFIX}:*`);
     }
   }
 }

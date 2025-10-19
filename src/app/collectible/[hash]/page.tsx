@@ -11,6 +11,7 @@ import { CollectibleImage } from "@/components/collectible-image";
 import { useReadContract } from "wagmi";
 import { useCollectibleOwner } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function CollectiblePage({ params }: { params: { hash: string } }) {
   const { hash } = params;
@@ -21,14 +22,14 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
   const hasValidOwnerData = (
     data: any
   ): data is { found_on_farcaster: boolean; address?: string } & Partial<User> => {
-    return data && !('error' in data);
+    return data && !("error" in data);
   };
 
   // Type guard specifically for Farcaster users
   const isFarcasterUser = (
     data: any
   ): data is { found_on_farcaster: true; username: string } & User => {
-    return hasValidOwnerData(data) && data.found_on_farcaster && 'username' in data;
+    return hasValidOwnerData(data) && data.found_on_farcaster && "username" in data;
   };
 
   if (error) {
@@ -123,56 +124,6 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
         <div className="px-4 space-y-4">
           <CollectibleImage cast={data} size={340} className="mx-auto" />
 
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 border-2 border-primary">
-              <AvatarImage 
-                src={isFarcasterUser(ownerQuery.data) ? ownerQuery.data.pfp_url : undefined} 
-                alt="Owner avatar"
-              />
-              <AvatarFallback>
-                {isFarcasterUser(ownerQuery.data) && ownerQuery.data.display_name
-                  ? ownerQuery.data.display_name.substring(0, 2).toUpperCase()
-                  : hasValidOwnerData(ownerQuery.data) && ownerQuery.data.address
-                  ? ownerQuery.data.address.substring(2, 4).toUpperCase()
-                  : "??"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">{data.cast.author.display_name}</p>
-              {hasValidOwnerData(ownerQuery.data) ? (
-                isFarcasterUser(ownerQuery.data) ? (
-                  <button
-                    onClick={() => {
-                      const userData = ownerQuery.data;
-                      if (isFarcasterUser(userData)) {
-                        window.open(`https://warpcast.com/${userData.username}`, '_blank');
-                      }
-                    }}
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    Owned by @{(() => {
-                      const userData = ownerQuery.data;
-                      return isFarcasterUser(userData) ? userData.username : 'Unknown';
-                    })()}
-                  </button>
-                ) : ownerQuery.data.address ? (
-                  <a
-                    href={`https://etherscan.io/address/${ownerQuery.data.address}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    Owned by {ownerQuery.data.address.substring(0, 6)}...{ownerQuery.data.address.substring(-4)}
-                  </a>
-                ) : null
-              ) : ownerQuery.isLoading ? (
-                <p className="text-xs text-muted-foreground">Loading owner...</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">Owner unknown</p>
-              )}
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-card p-4">
               <div className="mb-1 flex items-center gap-2 text-muted-foreground">
@@ -193,8 +144,8 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
           <Tabs defaultValue="details" className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-card">
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="owners">Owner</TabsTrigger>
               <TabsTrigger value="bids">Bids</TabsTrigger>
+              <TabsTrigger value="owners">Owner</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-4">
               <div className="rounded-2xl bg-card p-4">
@@ -205,6 +156,59 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
               </div>
             </TabsContent>
             <TabsContent value="owner" className="mt-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12 border-2 border-primary">
+                  <AvatarImage
+                    src={isFarcasterUser(ownerQuery.data) ? ownerQuery.data.pfp_url : undefined}
+                    alt="Owner avatar"
+                  />
+                  <AvatarFallback>
+                    {isFarcasterUser(ownerQuery.data) && ownerQuery.data.display_name
+                      ? ownerQuery.data.display_name.substring(0, 2).toUpperCase()
+                      : hasValidOwnerData(ownerQuery.data) && ownerQuery.data.address
+                      ? ownerQuery.data.address.substring(2, 4).toUpperCase()
+                      : "??"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {data.cast.author.display_name}
+                  </p>
+                  {hasValidOwnerData(ownerQuery.data) ? (
+                    isFarcasterUser(ownerQuery.data) ? (
+                      <button
+                        onClick={() => {
+                          const userData = ownerQuery.data;
+                          if (isFarcasterUser(userData)) {
+                            sdk.actions.viewProfile({ fid: userData.fid });
+                          }
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Owned by @
+                        {(() => {
+                          const userData = ownerQuery.data;
+                          return isFarcasterUser(userData) ? userData.username : "Unknown";
+                        })()}
+                      </button>
+                    ) : ownerQuery.data.address ? (
+                      <a
+                        href={`https://etherscan.io/address/${ownerQuery.data.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Owned by {ownerQuery.data.address.substring(0, 6)}...
+                        {ownerQuery.data.address.substring(-4)}
+                      </a>
+                    ) : null
+                  ) : ownerQuery.isLoading ? (
+                    <p className="text-xs text-muted-foreground">Loading owner...</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Owner unknown</p>
+                  )}
+                </div>
+              </div>
               <div className="rounded-2xl bg-card p-4">
                 {hasValidOwnerData(ownerQuery.data) ? (
                   ownerQuery.data.found_on_farcaster ? (
@@ -220,28 +224,43 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
                           <h4 className="font-semibold text-foreground">
                             {ownerQuery.data.display_name || ownerQuery.data.username}
                           </h4>
-                          <p className="text-sm text-muted-foreground">@{ownerQuery.data.username}</p>
-                          <p className="text-xs text-muted-foreground">FID: {ownerQuery.data.fid}</p>
+                          <p className="text-sm text-muted-foreground">
+                            @{ownerQuery.data.username}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            FID: {ownerQuery.data.fid}
+                          </p>
                         </div>
                       </div>
                       {ownerQuery.data.profile?.bio?.text && (
                         <div>
                           <h5 className="text-sm font-medium text-foreground mb-1">Bio</h5>
-                          <p className="text-sm text-muted-foreground">{ownerQuery.data.profile.bio.text}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {ownerQuery.data.profile.bio.text}
+                          </p>
                         </div>
                       )}
                       <div className="flex gap-4 text-sm">
                         <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{ownerQuery.data.follower_count}</span> followers
+                          <span className="font-medium text-foreground">
+                            {ownerQuery.data.follower_count}
+                          </span>{" "}
+                          followers
                         </span>
                         <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{ownerQuery.data.following_count}</span> following
+                          <span className="font-medium text-foreground">
+                            {ownerQuery.data.following_count}
+                          </span>{" "}
+                          following
                         </span>
                       </div>
                       <button
                         onClick={() => {
                           if (isFarcasterUser(ownerQuery.data)) {
-                            window.open(`https://warpcast.com/${ownerQuery.data.username}`, '_blank');
+                            window.open(
+                              `https://warpcast.com/${ownerQuery.data.username}`,
+                              "_blank"
+                            );
                           }
                         }}
                         className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
@@ -287,7 +306,9 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">Unable to load owner information.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Unable to load owner information.
+                    </p>
                   </div>
                 )}
               </div>
