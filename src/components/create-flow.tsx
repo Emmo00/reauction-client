@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChooseCollectible } from "@/components/create/choose-collectible";
 import { ChooseListingType } from "@/components/create/choose-listing-type";
 import { AuctionDetails } from "@/components/create/auction-details";
@@ -8,6 +8,10 @@ import { ListingDetails } from "@/components/create/listing-details";
 import { ReviewConfirm } from "@/components/create/review-confirm";
 import { SuccessScreen } from "@/components/create/success-screen";
 import { CastResponse } from "@neynar/nodejs-sdk/build/api";
+import { useAccount, useConnect, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
+import auctionAbi from "@/abis/auction.json";
+import { getAuctionContractAddress } from "@/lib/constants";
 
 export type ListingType = "auction" | "fixed" | null;
 export type Collection = {
@@ -28,10 +32,22 @@ export type ListingData = {
 
 export function CreateFlow() {
   const [step, setStep] = useState(1);
+  const [hasSignedTransaction, setHasSignedTransaction] = useState(false);
   const [listingData, setListingData] = useState<ListingData>({
     collectible: null,
     listingType: null,
   });
+
+  const { writeContract, data: hash, error } = useWriteContract();
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    error: confirmationError,
+  } = useWaitForTransactionReceipt({
+    hash,
+  });
+  const { isConnected } = useAccount();
+  const { connect } = useConnect();
 
   const updateListingData = (data: Partial<ListingData>) => {
     setListingData((prev) => ({ ...prev, ...data }));
@@ -43,6 +59,61 @@ export function CreateFlow() {
     setStep(1);
     setListingData({ collectible: null, listingType: null });
   };
+
+  function handleCreateAuction() {
+    const contractAddress = getAuctionContractAddress();
+    writeContract({
+      address: contractAddress as `0x${string}`,
+      abi: auctionAbi,
+      functionName: "startAuction",
+      args: [
+        BigInt(listingData.collectible?.cast?.cast.hash!),
+        listingData.startingPrice ?? 0,
+        listingData.duration ?? 0,
+      ],
+    });
+  }
+
+  function handleCreateListing() {
+    const contractAddress = getAuctionContractAddress();
+    writeContract({
+      address: contractAddress as `0x${string}`,
+      abi: auctionAbi,
+      functionName: "createListing",
+      args: [BigInt(listingData.collectible?.cast?.cast.hash!), listingData.price ?? 0],
+    });
+  }
+
+  function handleReviewSubmission() {
+    try {
+      if (!isConnected) {
+        connect({ connector: farcasterFrame() });
+      }
+
+      switch (listingData.listingType) {
+        case "auction":
+          handleCreateAuction();
+          break;
+        case "fixed":
+          handleCreateListing();
+          break;
+        default:
+          break;
+      }
+
+      setHasSignedTransaction(true);
+    } catch (e) {
+      console.error("Error creating listing:", e);
+    } finally {
+      setListingData({ collectible: null, listingType: null });
+    }
+  }
+
+  useEffect(() => {
+    if (isConfirmed && hasSignedTransaction && !isConfirming) {
+      nextStep();
+    }
+  }, [isConfirmed, isConfirming, hasSignedTransaction]);
 
   return (
     <div className="min-h-screen pb-24">
@@ -84,7 +155,7 @@ export function CreateFlow() {
       {step === 4 && (
         <ReviewConfirm
           listingData={listingData}
-          onConfirm={nextStep}
+          onConfirm={handleReviewSubmission}
           onBack={prevStep}
           onEdit={(editStep) => setStep(editStep)}
         />

@@ -44,7 +44,7 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit }: Review
           </div>
           <div className="flex items-center gap-3 p-4">
             <div className="h-12 w-12 overflow-hidden rounded-lg">
-              {collectible?.cast && <CollectibleImage cast={collectible.cast} size={50}/>}
+              {collectible?.cast && <CollectibleImage cast={collectible.cast} size={50} />}
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm group-hover:text-purple-300">
@@ -122,7 +122,7 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit }: Review
           onClick={onConfirm}
           className="h-14 w-full rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-lg font-semibold text-white shadow-lg shadow-purple-500/30 transition-all hover:shadow-purple-500/50"
         >
-          Create Listing
+          Create {listingData.listingType == "auction" ? " Auction" : "Listing"}
         </Button>
       </div>
     </div>
