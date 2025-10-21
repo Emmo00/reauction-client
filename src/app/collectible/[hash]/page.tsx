@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, MoreVertical, Clock, Zap } from "lucide-react";
+import { ChevronLeft, MoreVertical, Clock, Zap, ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -152,6 +152,20 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
                 <h3 className="mb-2 font-semibold text-foreground">Content</h3>
                 <p className="text-sm text-muted-foreground">
                   {data.cast.text || "No description provided."}
+                </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Created on {new Date(parseInt(data.cast.timestamp) * 1000).toLocaleDateString()}{" "}
+                  at {new Date(parseInt(data.cast.timestamp) * 1000).toLocaleTimeString()}.
+                </p>
+                <p
+                  className="mt-4 text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => {
+                    sdk.actions.viewCast({
+                      hash,
+                    });
+                  }}
+                >
+                  view cast <ArrowUpRightIcon className="inline-block h-4 w-4 mb-1" />
                 </p>
               </div>
             </TabsContent>
