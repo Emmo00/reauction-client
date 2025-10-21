@@ -159,7 +159,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
           <div className="text-center space-y-2">
             <h3 className="text-xl font-semibold text-white">Loading Your Collectibles</h3>
             <p className="text-gray-400 text-sm">
-              Fetching your owned collectibles from the blockchain...
+              Fetching your collectibles...
             </p>
           </div>
         </div>
@@ -301,7 +301,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
       {/* End of Results */}
       {!hasMorePages && page !== 1 && allCollectibles.length > 0 && (
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-gray-500">You've reached the end of your collectibles</p>
+          <p className="text-sm text-gray-500">-- end --</p>
         </div>
       )}
     </div>

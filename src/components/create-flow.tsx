@@ -89,7 +89,7 @@ export function CreateFlow() {
           onEdit={(editStep) => setStep(editStep)}
         />
       )}
-      {step === 5 && <SuccessScreen onReset={resetFlow} />}
+      {step === 5 && <SuccessScreen listingData={listingData} />}
     </div>
   );
 }
