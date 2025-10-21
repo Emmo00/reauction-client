@@ -301,7 +301,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
       {/* End of Results */}
       {!hasMorePages && page !== 1 && allCollectibles.length > 0 && (
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-gray-500">-- end --</p>
+          <p className="text-xs text-gray-500">-- end --</p>
         </div>
       )}
     </div>

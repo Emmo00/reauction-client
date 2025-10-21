@@ -8,13 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNav } from "@/components/bottom-nav";
 import { useCollectible } from "@/queries/casts";
 import { CollectibleImage } from "@/components/collectible-image";
-import { useReadContract } from "wagmi";
 import { useCollectibleOwner } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-export default async function CollectiblePage({ params }: { params: Promise<{ hash: string }> }) {
-  const { hash } = await params;
+export default function CollectiblePage({ params }: { params: any}) {
+  const { hash } = params;
   const { data, error } = useCollectible(hash);
   const ownerQuery = useCollectibleOwner(hash);
 
