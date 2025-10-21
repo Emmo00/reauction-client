@@ -13,8 +13,8 @@ import { useCollectibleOwner } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-export default function CollectiblePage({ params }: { params: { hash: string } }) {
-  const { hash } = params;
+export default async function CollectiblePage({ params }: { params: Promise<{ hash: string }> }) {
+  const { hash } = await params;
   const { data, error } = useCollectible(hash);
   const ownerQuery = useCollectibleOwner(hash);
 
