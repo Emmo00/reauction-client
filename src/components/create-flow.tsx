@@ -19,7 +19,7 @@ export type Collection = {
 };
 
 export type ListingData = {
-  collection: Collection | null;
+  collectible: Collection | null;
   listingType: ListingType;
   price?: string;
   startingPrice?: string;
@@ -29,7 +29,7 @@ export type ListingData = {
 export function CreateFlow() {
   const [step, setStep] = useState(1);
   const [listingData, setListingData] = useState<ListingData>({
-    collection: null,
+    collectible: null,
     listingType: null,
   });
 
@@ -41,15 +41,15 @@ export function CreateFlow() {
   const prevStep = () => setStep((prev) => prev - 1);
   const resetFlow = () => {
     setStep(1);
-    setListingData({ collection: null, listingType: null });
+    setListingData({ collectible: null, listingType: null });
   };
 
   return (
     <div className="min-h-screen pb-24">
       {step === 1 && (
         <ChooseCollectible
-          onSelect={(collection) => {
-            updateListingData({ collection });
+          onSelect={(collectible) => {
+            updateListingData({ collectible });
             nextStep();
           }}
         />
