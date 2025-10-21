@@ -27,7 +27,7 @@ export function MobileHeader() {
         </Avatar>
         <div>
           <p className="text-sm font-semibold text-foreground">{context?.user.displayName}</p>
-          <p className="text-xs text-foreground">{context?.user.username}</p>
+          <p className="text-xs text-muted-foreground">@{context?.user.username}</p>
         </div>
       </div>
       <button className="flex h-10 w-10 items-center justify-center rounded-full bg-card">

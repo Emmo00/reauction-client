@@ -158,7 +158,7 @@ export function CreateFlow() {
       functionName: "createListing",
       args: [
         BigInt(listingData.collectible?.cast?.cast.hash!),
-        parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
+        parseFloat(listingData.price || "0") * 10 ** USDC_DECIMALS,
       ],
     });
   }
