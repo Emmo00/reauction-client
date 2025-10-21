@@ -11,9 +11,11 @@ import { CastResponse } from "@neynar/nodejs-sdk/build/api";
 import { useAccount, useConnect, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import auctionAbi from "@/abis/auction.json";
-import { getAuctionContractAddress, USDC_DECIMALS } from "@/lib/constants";
-import { AlertTriangle, X } from "lucide-react";
+import collectibleAbi from "@/abis/collectible.json";
+import { getAuctionContractAddress, getCollectibleContractAddress, USDC_DECIMALS } from "@/lib/constants";
+import { AlertTriangle, X, Loader2, Check, Shield, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export type ListingType = "auction" | "fixed" | null;
 export type Collection = {
@@ -36,11 +38,15 @@ export function CreateFlow() {
   const [step, setStep] = useState(1);
   const [hasSignedTransaction, setHasSignedTransaction] = useState(false);
   const [currentError, setCurrentError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<1 | 2>(1);
+  const [approvalTxHash, setApprovalTxHash] = useState<`0x${string}` | null>(null);
   const [listingData, setListingData] = useState<ListingData>({
     collectible: null,
     listingType: null,
   });
 
+  // Main transaction hook (for listing/auction creation)
   const { writeContract, data: hash, error } = useWriteContract();
   const {
     isLoading: isConfirming,
@@ -49,8 +55,23 @@ export function CreateFlow() {
   } = useWaitForTransactionReceipt({
     hash,
   });
-  const { isConnected } = useAccount();
-  const { connect } = useConnect();
+
+  // Approval transaction hook
+  const { 
+    writeContract: writeApproval, 
+    data: approvalHash, 
+    error: approvalError 
+  } = useWriteContract();
+  const {
+    isLoading: isApprovingConfirming,
+    isSuccess: isApprovalConfirmed,
+    error: approvalConfirmationError,
+  } = useWaitForTransactionReceipt({
+    hash: approvalHash,
+  });
+
+  const { isConnected, address } = useAccount();
+  const { connect, connectAsync } = useConnect();
 
   const updateListingData = (data: Partial<ListingData>) => {
     setListingData((prev) => ({ ...prev, ...data }));
@@ -70,6 +91,9 @@ export function CreateFlow() {
     setStep(1);
     setCurrentError(null);
     setHasSignedTransaction(false);
+    setIsModalOpen(false);
+    setModalStep(1);
+    setApprovalTxHash(null);
     setListingData({ collectible: null, listingType: null });
   };
 
@@ -77,7 +101,15 @@ export function CreateFlow() {
     setCurrentError(null);
   };
 
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalStep(1);
+    setApprovalTxHash(null);
+    setCurrentError(null);
+  };
+
   const getErrorMessage = (error: any): string => {
+    console.log("errorrrr", error);
     if (error?.shortMessage) {
       return error.shortMessage;
     }
@@ -91,6 +123,20 @@ export function CreateFlow() {
   };
 
   function handleCreateAuction() {
+    console.log("cast hash", listingData.collectible?.cast?.cast.hash!);
+
+    console.log("hash to bit int", BigInt(listingData.collectible?.cast?.cast.hash!));
+
+    console.log("continue");
+
+    console.log("listing data", listingData);
+
+    console.log("args", [
+      BigInt(listingData.collectible?.cast?.cast.hash!),
+      parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
+      Number(listingData.duration) * 24 * 60 * 60,
+    ]);
+
     const contractAddress = getAuctionContractAddress();
     writeContract({
       address: contractAddress as `0x${string}`,
@@ -98,7 +144,7 @@ export function CreateFlow() {
       functionName: "startAuction",
       args: [
         BigInt(listingData.collectible?.cast?.cast.hash!),
-        parseFloat(listingData.startingPrice ?? "0") * 10 ** USDC_DECIMALS,
+        parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
         Number(listingData.duration) * 24 * 60 * 60,
       ],
     });
@@ -112,19 +158,31 @@ export function CreateFlow() {
       functionName: "createListing",
       args: [
         BigInt(listingData.collectible?.cast?.cast.hash!),
-        parseFloat(listingData.startingPrice ?? "0") * 10 ** USDC_DECIMALS,
+        parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
       ],
     });
   }
 
-  function handleReviewSubmission() {
+  function handleApproveNFT() {
+    const collectibleAddress = getCollectibleContractAddress();
+    const auctionAddress = getAuctionContractAddress();
+    const tokenId = listingData.collectible?.cast?.cast.hash!;
+
+    writeApproval({
+      address: collectibleAddress as `0x${string}`,
+      abi: collectibleAbi,
+      functionName: "approve",
+      args: [auctionAddress as `0x${string}`, BigInt(tokenId)],
+    });
+  }
+
+  async function handleReviewSubmission() {
     try {
       setCurrentError(null); // Clear any previous errors
 
-      if (!isConnected) {
-        connect({ connector: farcasterFrame() });
-        return;
-      }
+      await connectAsync({ connector: farcasterFrame() });
+
+      console.log("user address", address, isConnected);
 
       // Validate listing data
       if (!listingData.collectible?.cast?.cast.hash) {
@@ -134,6 +192,17 @@ export function CreateFlow() {
         return;
       }
 
+      // Open modal and start the 2-step process
+      setIsModalOpen(true);
+      setModalStep(1);
+    } catch (e) {
+      console.error("Error starting listing process:", e);
+      setCurrentError(getErrorMessage(e));
+    }
+  }
+
+  function proceedWithListing() {
+    try {
       switch (listingData.listingType) {
         case "auction":
           handleCreateAuction();
@@ -157,13 +226,30 @@ export function CreateFlow() {
     }
   }
 
-  // Handle transaction confirmation
+  // Handle approval transaction states
   useEffect(() => {
-    if (isConfirmed && hasSignedTransaction && !isConfirming) {
+    if (isApprovalConfirmed && modalStep === 1) {
+      setApprovalTxHash(approvalHash as `0x${string}`);
+      setModalStep(2);
+      // Now proceed with the actual listing
+      proceedWithListing();
+    }
+  }, [isApprovalConfirmed, modalStep]);
+
+  useEffect(() => {
+    if (approvalError) {
+      setCurrentError(getErrorMessage(approvalError));
+    }
+  }, [approvalError]);
+
+  // Handle main transaction confirmation
+  useEffect(() => {
+    if (isConfirmed && hasSignedTransaction && !isConfirming && modalStep === 2) {
       setCurrentError(null); // Clear any errors on success
+      setIsModalOpen(false);
       nextStep();
     }
-  }, [isConfirmed, isConfirming, hasSignedTransaction]);
+  }, [isConfirmed, isConfirming, hasSignedTransaction, modalStep]);
 
   // Handle transaction and confirmation errors
   useEffect(() => {
@@ -264,6 +350,143 @@ export function CreateFlow() {
       {step === 5 && (
         <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} />
       )}
+
+      {/* 2-Step Transaction Modal */}
+      <Dialog open={isModalOpen} onOpenChange={closeModal}>
+        <DialogContent className="sm:max-w-md">
+          <div className="relative overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
+            
+            <div className="relative z-10 p-6">
+              <DialogHeader className="text-center mb-6">
+                <DialogTitle className="text-xl font-semibold text-slate-200 mb-2">
+                  {modalStep === 1 ? 'Approve NFT Transfer' : 'Create Listing'}
+                </DialogTitle>
+                <p className="text-sm text-slate-400">
+                  {modalStep === 1 
+                    ? 'First, approve the contract to transfer your NFT'
+                    : 'Now creating your listing on the marketplace'
+                  }
+                </p>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Step indicators */}
+                <div className="flex items-center justify-center space-x-4 mb-6">
+                  <div className={`flex items-center space-x-2 ${modalStep >= 1 ? 'text-blue-400' : 'text-slate-500'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      modalStep >= 1 ? 'border-blue-400 bg-blue-400/20' : 'border-slate-500 bg-slate-500/20'
+                    }`}>
+                      {isApprovalConfirmed ? (
+                        <Check className="w-4 h-4" />
+                      ) : modalStep === 1 ? (
+                        <span className="text-sm font-medium">1</span>
+                      ) : (
+                        <span className="text-sm font-medium">1</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">Approve</span>
+                  </div>
+                  
+                  <div className={`w-8 h-0.5 ${modalStep >= 2 ? 'bg-blue-400' : 'bg-slate-600'}`} />
+                  
+                  <div className={`flex items-center space-x-2 ${modalStep >= 2 ? 'text-blue-400' : 'text-slate-500'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      modalStep >= 2 ? 'border-blue-400 bg-blue-400/20' : 'border-slate-500 bg-slate-500/20'
+                    }`}>
+                      {isConfirmed ? (
+                        <Check className="w-4 h-4" />
+                      ) : modalStep === 2 ? (
+                        <span className="text-sm font-medium">2</span>
+                      ) : (
+                        <span className="text-sm font-medium">2</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">Create</span>
+                  </div>
+                </div>
+
+                {/* Step 1: Approval */}
+                {modalStep === 1 && (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-slate-800/50 flex items-center justify-center">
+                      <Shield className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-slate-200 mb-2">NFT Approval Required</h3>
+                      <p className="text-sm text-slate-400 mb-4">
+                        Allow the marketplace to transfer your collectible when someone purchases it.
+                      </p>
+                      <Button
+                        onClick={handleApproveNFT}
+                        disabled={isApprovingConfirming}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {isApprovingConfirming ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Approving...
+                          </>
+                        ) : (
+                          'Approve NFT Transfer'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Create Listing */}
+                {modalStep === 2 && (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-slate-800/50 flex items-center justify-center">
+                      <Gavel className="w-8 h-8 text-green-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-slate-200 mb-2">Creating Your Listing</h3>
+                      <p className="text-sm text-slate-400 mb-4">
+                        {listingData.listingType === 'auction' 
+                          ? 'Starting your auction on the marketplace...' 
+                          : 'Creating your fixed-price listing...'
+                        }
+                      </p>
+                      {approvalTxHash && (
+                        <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 mb-4">
+                          <div className="flex items-center gap-2 text-green-400 mb-1">
+                            <Check className="w-4 h-4" />
+                            <span className="text-sm font-medium">NFT Approved</span>
+                          </div>
+                          <p className="text-xs text-green-300/70">
+                            Transaction: {approvalTxHash.slice(0, 10)}...{approvalTxHash.slice(-8)}
+                          </p>
+                        </div>
+                      )}
+                      {isConfirming && (
+                        <div className="flex items-center justify-center text-blue-400">
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          <span className="text-sm">Processing transaction...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cancel button */}
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={closeModal}
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-400 hover:text-slate-200"
+                    disabled={isApprovingConfirming || isConfirming}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
