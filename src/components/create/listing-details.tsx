@@ -48,7 +48,7 @@ export function ListingDetails({ onContinue, onBack }: ListingDetailsProps) {
               className="h-12 border-white/10 bg-white/5 pr-12 text-white placeholder:text-gray-500 backdrop-blur-sm focus:border-purple-500/50 focus:ring-purple-500/20"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-              ETH
+              USDC
             </span>
           </div>
         </div>
@@ -59,7 +59,7 @@ export function ListingDetails({ onContinue, onBack }: ListingDetailsProps) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Price:</span>
-              <span className="font-medium text-white">{price || "0.00"} ETH</span>
+              <span className="font-medium text-white">{price || "0.00"} USDC</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Type:</span>

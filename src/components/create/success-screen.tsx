@@ -7,9 +7,11 @@ import type { ListingData } from "../create-flow";
 
 interface SuccessScreenProps {
   listingData: ListingData;
+  onReset?: () => void;
+  transactionHash?: `0x${string}`;
 }
 
-export function SuccessScreen({ listingData }: SuccessScreenProps) {
+export function SuccessScreen({ listingData, onReset, transactionHash }: SuccessScreenProps) {
   const router = useRouter();
 
   const handleViewListing = () => {
@@ -36,6 +38,22 @@ export function SuccessScreen({ listingData }: SuccessScreenProps) {
           Your collectible has been listed successfully. It's now live and ready for buyers.
         </p>
 
+        {/* Transaction Hash */}
+        {transactionHash && (
+          <div className="mb-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+            <p className="text-sm text-white/60 mb-2">Transaction Hash:</p>
+            <p className="text-xs font-mono text-white/80 break-all">{transactionHash}</p>
+            <a
+              href={`https://basescan.org/tx/${transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-purple-400 hover:text-purple-300 transition-colors mt-2 inline-block"
+            >
+              View on BaseScan →
+            </a>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
@@ -51,6 +69,15 @@ export function SuccessScreen({ listingData }: SuccessScreenProps) {
           >
             Return to Home
           </Button>
+          {onReset && (
+            <Button
+              onClick={onReset}
+              variant="ghost"
+              className="h-12 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5"
+            >
+              Create Another Listing
+            </Button>
+          )}
         </div>
       </div>
     </div>

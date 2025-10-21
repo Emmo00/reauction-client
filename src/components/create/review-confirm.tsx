@@ -10,9 +10,11 @@ interface ReviewConfirmProps {
   onConfirm: () => void;
   onBack: () => void;
   onEdit: (step: number) => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit }: ReviewConfirmProps) {
+export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoading = false, error }: ReviewConfirmProps) {
   const { collectible, listingType, price, startingPrice, duration } = listingData;
 
   return (
@@ -120,9 +122,17 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit }: Review
       <div className="mt-8">
         <Button
           onClick={onConfirm}
-          className="h-14 w-full rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-lg font-semibold text-white shadow-lg shadow-purple-500/30 transition-all hover:shadow-purple-500/50"
+          disabled={isLoading}
+          className="h-14 w-full rounded-xl bg-gradient-to-r from-purple-500 to-purple-700 text-lg font-semibold text-white shadow-lg shadow-purple-500/30 transition-all hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Create {listingData.listingType == "auction" ? " Auction" : "Listing"}
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />
+              <span>Creating {listingData.listingType === "auction" ? "Auction" : "Listing"}...</span>
+            </div>
+          ) : (
+            `Create ${listingData.listingType === "auction" ? " Auction" : "Listing"}`
+          )}
         </Button>
       </div>
     </div>

@@ -9,6 +9,7 @@ import { useAccount, useConnect } from "wagmi";
 import { CollectibleImage } from "@/components/collectible-image";
 import { Button } from "@/components/ui/button";
 import { CastResponse } from "@neynar/nodejs-sdk/build/api";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
 interface ChooseCollectibleProps {
   onSelect: (collection: Collection) => void;
@@ -126,7 +127,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
             </p>
           </div>
           <Button
-            onClick={() => connect({ connector: connectors[0] })}
+            onClick={() => connect({ connector: farcasterFrame() })}
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl"
           >
             Connect Wallet
@@ -158,9 +159,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
           </div>
           <div className="text-center space-y-2">
             <h3 className="text-xl font-semibold text-white">Loading Your Collectibles</h3>
-            <p className="text-gray-400 text-sm">
-              Fetching your collectibles...
-            </p>
+            <p className="text-gray-400 text-sm">Fetching your collectibles...</p>
           </div>
         </div>
       </div>

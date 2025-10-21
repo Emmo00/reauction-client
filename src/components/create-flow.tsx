@@ -11,7 +11,9 @@ import { CastResponse } from "@neynar/nodejs-sdk/build/api";
 import { useAccount, useConnect, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import auctionAbi from "@/abis/auction.json";
-import { getAuctionContractAddress } from "@/lib/constants";
+import { getAuctionContractAddress, USDC_DECIMALS } from "@/lib/constants";
+import { AlertTriangle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type ListingType = "auction" | "fixed" | null;
 export type Collection = {
@@ -33,6 +35,7 @@ export type ListingData = {
 export function CreateFlow() {
   const [step, setStep] = useState(1);
   const [hasSignedTransaction, setHasSignedTransaction] = useState(false);
+  const [currentError, setCurrentError] = useState<string | null>(null);
   const [listingData, setListingData] = useState<ListingData>({
     collectible: null,
     listingType: null,
@@ -53,11 +56,38 @@ export function CreateFlow() {
     setListingData((prev) => ({ ...prev, ...data }));
   };
 
-  const nextStep = () => setStep((prev) => prev + 1);
-  const prevStep = () => setStep((prev) => prev - 1);
+  const nextStep = () => {
+    setCurrentError(null); // Clear errors when moving forward
+    setStep((prev) => prev + 1);
+  };
+
+  const prevStep = () => {
+    setCurrentError(null); // Clear errors when moving backward
+    setStep((prev) => prev - 1);
+  };
+
   const resetFlow = () => {
     setStep(1);
+    setCurrentError(null);
+    setHasSignedTransaction(false);
     setListingData({ collectible: null, listingType: null });
+  };
+
+  const clearError = () => {
+    setCurrentError(null);
+  };
+
+  const getErrorMessage = (error: any): string => {
+    if (error?.shortMessage) {
+      return error.shortMessage;
+    }
+    if (error?.message) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    return "An unexpected error occurred. Please try again.";
   };
 
   function handleCreateAuction() {
@@ -68,8 +98,8 @@ export function CreateFlow() {
       functionName: "startAuction",
       args: [
         BigInt(listingData.collectible?.cast?.cast.hash!),
-        listingData.startingPrice ?? 0,
-        listingData.duration ?? 0,
+        parseFloat(listingData.startingPrice ?? "0") * 10 ** USDC_DECIMALS,
+        Number(listingData.duration) * 24 * 60 * 60,
       ],
     });
   }
@@ -80,14 +110,28 @@ export function CreateFlow() {
       address: contractAddress as `0x${string}`,
       abi: auctionAbi,
       functionName: "createListing",
-      args: [BigInt(listingData.collectible?.cast?.cast.hash!), listingData.price ?? 0],
+      args: [
+        BigInt(listingData.collectible?.cast?.cast.hash!),
+        parseFloat(listingData.startingPrice ?? "0") * 10 ** USDC_DECIMALS,
+      ],
     });
   }
 
   function handleReviewSubmission() {
     try {
+      setCurrentError(null); // Clear any previous errors
+
       if (!isConnected) {
         connect({ connector: farcasterFrame() });
+        return;
+      }
+
+      // Validate listing data
+      if (!listingData.collectible?.cast?.cast.hash) {
+        setCurrentError(
+          "Invalid collectible selected. Please go back and select a valid collectible."
+        );
+        return;
       }
 
       switch (listingData.listingType) {
@@ -95,28 +139,83 @@ export function CreateFlow() {
           handleCreateAuction();
           break;
         case "fixed":
+          if (!listingData.price) {
+            setCurrentError("Please set a price for your listing.");
+            return;
+          }
           handleCreateListing();
           break;
         default:
-          break;
+          setCurrentError("Please select a listing type.");
+          return;
       }
 
       setHasSignedTransaction(true);
     } catch (e) {
       console.error("Error creating listing:", e);
-    } finally {
-      setListingData({ collectible: null, listingType: null });
+      setCurrentError(getErrorMessage(e));
     }
   }
 
+  // Handle transaction confirmation
   useEffect(() => {
     if (isConfirmed && hasSignedTransaction && !isConfirming) {
+      setCurrentError(null); // Clear any errors on success
       nextStep();
     }
   }, [isConfirmed, isConfirming, hasSignedTransaction]);
 
+  // Handle transaction and confirmation errors
+  useEffect(() => {
+    if (error) {
+      setCurrentError(getErrorMessage(error));
+      setHasSignedTransaction(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (confirmationError) {
+      setCurrentError(`Transaction failed: ${getErrorMessage(confirmationError)}`);
+      setHasSignedTransaction(false);
+    }
+  }, [confirmationError]);
+
   return (
     <div className="min-h-screen pb-24">
+      {/* Error Display */}
+      {currentError && (
+        <div className="fixed top-4 left-4 right-4 z-50">
+          <div className="relative overflow-hidden rounded-2xl bg-red-500/10 backdrop-blur-xl border border-red-500/20 shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5 rounded-2xl" />
+            <div className="relative z-10 p-4 flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-red-200 font-medium mb-1">Error</p>
+                <p className="text-sm text-red-100/80 leading-relaxed">{currentError}</p>
+              </div>
+              <button
+                onClick={clearError}
+                className="flex-shrink-0 p-1 rounded-lg hover:bg-red-500/10 transition-colors"
+              >
+                <X className="h-4 w-4 text-red-300" />
+              </button>
+            </div>
+            <div className="px-4 pb-4">
+              <Button
+                onClick={clearError}
+                variant="outline"
+                size="sm"
+                className="bg-red-500/10 border-red-500/20 text-red-200 hover:bg-red-500/20"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {step === 1 && (
         <ChooseCollectible
           onSelect={(collectible) => {
@@ -158,9 +257,13 @@ export function CreateFlow() {
           onConfirm={handleReviewSubmission}
           onBack={prevStep}
           onEdit={(editStep) => setStep(editStep)}
+          isLoading={isConfirming}
+          error={currentError}
         />
       )}
-      {step === 5 && <SuccessScreen listingData={listingData} />}
+      {step === 5 && (
+        <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} />
+      )}
     </div>
   );
 }

@@ -17,7 +17,10 @@ export function AuctionDetails({ onContinue, onBack }: AuctionDetailsProps) {
   const [duration, setDuration] = useState("3");
 
   const handleContinue = () => {
-    onContinue({ startingPrice, duration });
+    onContinue({
+      startingPrice,
+      duration,
+    });
   };
 
   return (
@@ -59,7 +62,7 @@ export function AuctionDetails({ onContinue, onBack }: AuctionDetailsProps) {
         {/* Starting Price */}
         <div className="space-y-2">
           <Label htmlFor="startingPrice" className="text-sm font-medium text-gray-300">
-            Starting Price (Optional) 
+            Starting Price (Optional)
           </Label>
           <div className="relative">
             <Input
