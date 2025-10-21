@@ -145,7 +145,7 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
             <TabsList className="grid w-full grid-cols-4 bg-card">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="bids">Bids</TabsTrigger>
-              <TabsTrigger value="owners">Owner</TabsTrigger>
+              <TabsTrigger value="owner">Owner</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-4">
               <div className="rounded-2xl bg-card p-4">
@@ -170,59 +170,6 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
               </div>
             </TabsContent>
             <TabsContent value="owner" className="mt-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12 border-2 border-primary">
-                  <AvatarImage
-                    src={isFarcasterUser(ownerQuery.data) ? ownerQuery.data.pfp_url : undefined}
-                    alt="Owner avatar"
-                  />
-                  <AvatarFallback>
-                    {isFarcasterUser(ownerQuery.data) && ownerQuery.data.display_name
-                      ? ownerQuery.data.display_name.substring(0, 2).toUpperCase()
-                      : hasValidOwnerData(ownerQuery.data) && ownerQuery.data.address
-                      ? ownerQuery.data.address.substring(2, 4).toUpperCase()
-                      : "??"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {data.cast.author.display_name}
-                  </p>
-                  {hasValidOwnerData(ownerQuery.data) ? (
-                    isFarcasterUser(ownerQuery.data) ? (
-                      <button
-                        onClick={() => {
-                          const userData = ownerQuery.data;
-                          if (isFarcasterUser(userData)) {
-                            sdk.actions.viewProfile({ fid: userData.fid });
-                          }
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        Owned by @
-                        {(() => {
-                          const userData = ownerQuery.data;
-                          return isFarcasterUser(userData) ? userData.username : "Unknown";
-                        })()}
-                      </button>
-                    ) : ownerQuery.data.address ? (
-                      <a
-                        href={`https://etherscan.io/address/${ownerQuery.data.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        Owned by {ownerQuery.data.address.substring(0, 6)}...
-                        {ownerQuery.data.address.substring(-4)}
-                      </a>
-                    ) : null
-                  ) : ownerQuery.isLoading ? (
-                    <p className="text-xs text-muted-foreground">Loading owner...</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Owner unknown</p>
-                  )}
-                </div>
-              </div>
               <div className="rounded-2xl bg-card p-4">
                 {hasValidOwnerData(ownerQuery.data) ? (
                   ownerQuery.data.found_on_farcaster ? (
@@ -271,10 +218,9 @@ export default function CollectiblePage({ params }: { params: { hash: string } }
                       <button
                         onClick={() => {
                           if (isFarcasterUser(ownerQuery.data)) {
-                            window.open(
-                              `https://warpcast.com/${ownerQuery.data.username}`,
-                              "_blank"
-                            );
+                            sdk.actions.viewProfile({
+                              fid: ownerQuery.data.fid,
+                            });
                           }
                         }}
                         className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"

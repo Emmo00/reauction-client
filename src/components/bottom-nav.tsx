@@ -11,7 +11,6 @@ export function BottomNav() {
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
     { icon: Plus, label: "Create", href: "/create", isSpecial: true },
-    { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
     { icon: User, label: "Profile", href: "/profile" },
   ]
 
