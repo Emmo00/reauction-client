@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { CollectibleStatusAPI, collectibleStatusQueryKeys } from "@/lib/api/collectible-status";
-import { CollectibleStatus } from "@/types/collectible-status";
+import { CollectibleStatus } from "@/types";
 
 export function useCollectibleStatus(address?: string) {
   const {

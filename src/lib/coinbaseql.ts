@@ -1,4 +1,4 @@
-import { CollectibleStatus, SqlApiResponse } from "@/types/collectible-status";
+import { CollectibleStatus, SqlApiResponse } from "@/types";
 // CoinbaSeQL SQL API configuration
 const SQL_API_URL = "https://api.cdp.coinbase.com/platform/v2/data/query/run";
 const CDP_CLIENT_TOKEN = process.env.CDP_CLIENT_TOKEN;

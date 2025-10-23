@@ -5,11 +5,11 @@ import {
   getCollectibleContractAddress,
   getPublicClient,
 } from "@/lib/constants";
-import { CollectibleStatus } from "@/types/collectible-status";
+import { CollectibleStatus } from "@/types";
 import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
 import { getContract, getAddress, isAddress } from "viem";
 import connectToDatabase from "@/lib/mongodb";
-import { CollectibleStatusCacheService } from "@/lib/cache/collectible-status-cache";
+import { CollectibleStatusCacheService } from "@/lib/cache";
 import collectibleAbi from "@/abis/collectible.json";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ address: string }> }) {

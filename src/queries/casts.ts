@@ -1,4 +1,4 @@
-import { OwnedCollectibles, OwnedCollectiblesResponse } from "@/types/collectible-status";
+import { OwnedCollectibles, OwnedCollectiblesResponse } from "@/types";
 import { CastResponse } from "@neynar/nodejs-sdk/build/api";
 import { useQuery } from "@tanstack/react-query";
 

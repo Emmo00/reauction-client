@@ -72,3 +72,11 @@ export interface OwnedCollectiblesError {
 }
 
 export type OwnedCollectiblesResponse = { data: OwnedCollectibles } | OwnedCollectiblesError;
+
+// Cache document interface
+export interface Cache<T = any> extends Document {
+  key: string;
+  data: T;
+  createdAt: Date;
+  expiresAt: Date;
+}

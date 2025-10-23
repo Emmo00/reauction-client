@@ -1,40 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
-
-export interface Cache<T = any> extends Document {
-  key: string;
-  data: T;
-  createdAt: Date;
-  expiresAt: Date;
-}
-
-const CacheSchema = new Schema<Cache>({
-  key: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  data: {
-    type: Schema.Types.Mixed,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  expiresAt: {
-    type: Date,
-    default: () => new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-    expires: 0, // MongoDB TTL index - documents will be automatically deleted when expiresAt is reached
-  },
-});
-
-// Create compound index for efficient queries
-CacheSchema.index({ key: 1, expiresAt: 1 });
-
-export const CacheModel = 
-  mongoose.models.Cache || 
-  mongoose.model<Cache>('Cache', CacheSchema);
+import type { CollectibleStatus } from "@/types";
+import CacheModel from "@/models/cache";
 
 export class CacheService {
   /**
@@ -55,7 +20,7 @@ export class CacheService {
       console.log(`Cache miss for key: ${key}`);
       return null;
     } catch (error) {
-      console.error('Error reading from cache:', error);
+      console.error("Error reading from cache:", error);
       return null;
     }
   }
@@ -63,11 +28,7 @@ export class CacheService {
   /**
    * Set cached data with optional TTL
    */
-  static async set<T>(
-    key: string, 
-    data: T, 
-    ttlHours: number = 2
-  ): Promise<void> {
+  static async set<T>(key: string, data: T, ttlHours: number = 2): Promise<void> {
     try {
       const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
 
@@ -87,7 +48,7 @@ export class CacheService {
 
       console.log(`Cached data for key: ${key}, expires at: ${expiresAt.toISOString()}`);
     } catch (error) {
-      console.error('Error writing to cache:', error);
+      console.error("Error writing to cache:", error);
       // Don't throw error - caching is optional
     }
   }
@@ -99,10 +60,10 @@ export class CacheService {
     try {
       if (keyOrPattern) {
         // Support both exact key match and pattern matching
-        const query = keyOrPattern.includes('*') 
-          ? { key: { $regex: keyOrPattern.replace(/\*/g, '.*') } }
+        const query = keyOrPattern.includes("*")
+          ? { key: { $regex: keyOrPattern.replace(/\*/g, ".*") } }
           : { key: keyOrPattern };
-        
+
         const result = await CacheModel.deleteMany(query);
         console.log(`Cleared ${result.deletedCount} cache entries for pattern: ${keyOrPattern}`);
       } else {
@@ -110,15 +71,15 @@ export class CacheService {
         console.log(`Cleared all ${result.deletedCount} cache entries`);
       }
     } catch (error) {
-      console.error('Error clearing cache:', error);
+      console.error("Error clearing cache:", error);
     }
   }
 
   /**
    * Get cache statistics
    */
-  static async getStats(): Promise<{ 
-    totalEntries: number; 
+  static async getStats(): Promise<{
+    totalEntries: number;
     validEntries: number;
     expiredEntries: number;
   }> {
@@ -131,7 +92,7 @@ export class CacheService {
 
       return { totalEntries, validEntries, expiredEntries };
     } catch (error) {
-      console.error('Error getting cache stats:', error);
+      console.error("Error getting cache stats:", error);
       return { totalEntries: 0, validEntries: 0, expiredEntries: 0 };
     }
   }
@@ -153,10 +114,10 @@ export class CacheService {
     // Cache miss - fetch fresh data
     console.log(`Cache miss for key: ${key}, fetching fresh data...`);
     const freshData = await fetchFunction();
-    
+
     // Cache the result
     await this.set(key, freshData, ttlHours);
-    
+
     return freshData;
   }
 }
@@ -182,7 +143,34 @@ export class OwnedCollectiblesCacheService {
       const key = this.generateKey(address);
       return CacheService.clear(key);
     } else {
-      return CacheService.clear('owned-collectibles-*');
+      return CacheService.clear("owned-collectibles-*");
+    }
+  }
+}
+
+export class CollectibleStatusCacheService {
+  private static readonly PREFIX = "collectible-status";
+
+  static generateKey(address: string): string {
+    return `${this.PREFIX}:${address.toLowerCase()}`;
+  }
+
+  static async get(address: string): Promise<CollectibleStatus | null> {
+    const key = this.generateKey(address);
+    return CacheService.get<CollectibleStatus>(key);
+  }
+
+  static async set(address: string, data: CollectibleStatus, ttlHours: number = 2): Promise<void> {
+    const key = this.generateKey(address);
+    return CacheService.set(key, data, ttlHours);
+  }
+
+  static async clear(address?: string): Promise<void> {
+    if (address) {
+      const key = this.generateKey(address);
+      return CacheService.clear(key);
+    } else {
+      return CacheService.clear(`${this.PREFIX}:*`);
     }
   }
 }

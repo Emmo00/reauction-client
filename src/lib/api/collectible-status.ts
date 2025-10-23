@@ -1,4 +1,4 @@
-import { CollectibleStatusResponse } from '@/types/collectible-status';
+import { CollectibleStatusResponse } from '@/types';
 import { APIClient, queryKeys } from './client';
 
 /**

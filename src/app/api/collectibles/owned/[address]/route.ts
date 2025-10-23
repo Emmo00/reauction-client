@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuctionContractAddress, getCoinbaseQLSchema } from "@/lib/constants";
-import { TransferEvent, OwnedCollectibles, PaginationInfo } from "@/types/collectible-status";
+import { TransferEvent, OwnedCollectibles, PaginationInfo } from "@/types";
 import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
 import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
 import { getChain, getRPCURL } from "@/lib/constants";
 import connectToDatabase from "@/lib/mongodb";
-import { OwnedCollectiblesCacheService } from "@/lib/cache/cache";
+import { OwnedCollectiblesCacheService } from "@/lib/cache";
 import auctionAbi from "@/abis/auction.json";
 import { getFarcasterCastByHash } from "@/lib/neynar";
 
