@@ -7,8 +7,12 @@ export class ListingService {
     return await listing.save();
   }
 
-  static async getListingById(listingId: number): Promise<Listing | null> {
-    return await ListingModel.findOne({ listingId });
+  static async getAuctionListingById(listingId: number): Promise<Listing | null> {
+    return await ListingModel.findOne({ listingId, listingType: "auction" });
+  }
+
+  static async getFixedPriceListingById(listingId: number): Promise<Listing | null> {
+    return await ListingModel.findOne({ listingId, listingType: "fixed-price" });
   }
 
   static async updateAuctionListing(
@@ -31,14 +35,6 @@ export class ListingService {
     );
   }
 
-  static async deleteListing(listingId: number): Promise<void> {
-    await ListingModel.deleteOne({ listingId });
-  }
-
-  static async deleteManyListings(listingIds: number[]): Promise<void> {
-    await ListingModel.deleteMany({ listingId: { $in: listingIds } });
-  }
-
   static async addBidToListing(
     listingId: number,
     bidder: NonNullable<Listing["bids"]>[0]["bidder"],
@@ -51,17 +47,28 @@ export class ListingService {
     );
   }
 
-  static async listingExists(listingId: number): Promise<boolean> {
-    const count = await ListingModel.countDocuments({ listingId });
-    return count > 0;
-  }
-
-  static async getListings({ limit, page }: { limit: number; page: number }): Promise<Listing[]> {
+  static async getListings({
+    limit,
+    page,
+    listingType,
+  }: {
+    limit: number;
+    page: number;
+    listingType?: "auction" | "fixed-price";
+  }): Promise<Listing[]> {
     const offset = (page - 1) * limit;
-    return await ListingModel.find().skip(offset).limit(limit).exec();
+    return await ListingModel.find({ listingType })
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .exec();
   }
 
-  static async countListings(): Promise<number> {
-    return await ListingModel.countDocuments();
+  static async countListings({
+    listingType,
+  }: {
+    listingType?: "auction" | "fixed-price";
+  }): Promise<number> {
+    return await ListingModel.countDocuments({ listingType });
   }
 }
