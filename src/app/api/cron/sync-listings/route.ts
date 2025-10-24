@@ -63,13 +63,13 @@ export async function POST(_: NextRequest) {
         console.log("fetched cast", cast);
 
         await ListingService.createListing({
-          listingId: BigInt(parameters?.auctionId!),
-          tokenId: BigInt(parameters?.tokenId!),
+          listingId: parameters?.auctionId!,
+          tokenId: parameters?.tokenId!,
           listingType: "auction",
           listingStatus: "active",
           creator: parameters?.creator!,
-          price: BigInt(parameters?.startAsk!),
-          highestBid: BigInt(parameters?.startAsk!),
+          price: parameters?.startAsk!,
+          highestBid: parameters?.startAsk!,
           cast,
           auctionStarted: false,
           endTime: parameters?.endTime!,
@@ -78,9 +78,9 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "AuctionSettled") {
         // mark listing as sold
-        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
+        await ListingService.updateAuctionListing(parameters?.auctionId!, {
           listingStatus: "sold",
-          highestBid: BigInt(parameters?.amount!),
+          highestBid: parameters?.amount!,
           buyer: (await getFarcasterUserByWalletAddress(parameters?.winner!)) || {
             address: parameters?.winner!,
           },
@@ -89,24 +89,24 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "AuctionCancelled") {
         // mark listing as cancelled
-        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
+        await ListingService.updateAuctionListing(parameters?.auctionId!, {
           listingStatus: "cancelled",
         });
       }
 
       // update highest bid price by fetching the BidPlaced events for each active auction (after last synced time)
       if (event_name === "BidPlaced") {
-        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
-          highestBid: BigInt(parameters?.amount!),
+        await ListingService.updateAuctionListing(parameters?.auctionId!, {
+          highestBid: parameters?.amount!,
           auctionStarted: true,
         });
 
         await ListingService.addBidToListing(
-          BigInt(parameters?.auctionId!),
+          parameters?.auctionId!,
           (await getFarcasterUserByWalletAddress(parameters?.bidder!)) || {
             address: parameters?.bidder!,
           },
-          BigInt(parameters?.amount!)
+          parameters?.amount!
         );
       }
 
@@ -114,12 +114,12 @@ export async function POST(_: NextRequest) {
       if (event_name === "ListingCreated") {
         // create new listing
         await ListingService.createListing({
-          listingId: BigInt(parameters?.listingId!),
-          tokenId: BigInt(parameters?.tokenId!),
+          listingId: parameters?.listingId!,
+          tokenId: parameters?.tokenId!,
           listingType: "fixed-price",
           listingStatus: "active",
           creator: parameters?.creator!,
-          price: BigInt(parameters?.startAsk!),
+          price: parameters?.startAsk!,
           cast: (await getFarcasterCastByHash(BigInt(parameters?.tokenId!).toString(16)))!,
           auctionStarted: true,
         });
@@ -127,7 +127,7 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "ListingPurchased") {
         // mark listing as sold
-        await ListingService.updateFixedPriceListing(BigInt(parameters?.listingId!), {
+        await ListingService.updateFixedPriceListing(parameters?.listingId!, {
           listingStatus: "sold",
           buyer: (await getFarcasterUserByWalletAddress(parameters?.buyer!)) || {
             address: parameters?.buyer!,
@@ -137,7 +137,7 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "ListingCancelled") {
         // mark listing as cancelled
-        await ListingService.updateFixedPriceListing(BigInt(parameters?.listingId!), {
+        await ListingService.updateFixedPriceListing(parameters?.listingId!, {
           listingStatus: "cancelled",
         });
       }

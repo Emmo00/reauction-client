@@ -7,16 +7,16 @@ export class ListingService {
     return await listing.save();
   }
 
-  static async getAuctionListingById(listingId: number): Promise<Listing | null> {
+  static async getAuctionListingById(listingId: string): Promise<Listing | null> {
     return await ListingModel.findOne({ listingId, listingType: "auction" });
   }
 
-  static async getFixedPriceListingById(listingId: number): Promise<Listing | null> {
+  static async getFixedPriceListingById(listingId: string): Promise<Listing | null> {
     return await ListingModel.findOne({ listingId, listingType: "fixed-price" });
   }
 
   static async updateAuctionListing(
-    listingId: bigint,
+    listingId: string,
     updateData: Partial<Listing>
   ): Promise<Listing | null> {
     return await ListingModel.findOneAndUpdate({ listingId, listingType: "auction" }, updateData, {
@@ -25,7 +25,7 @@ export class ListingService {
   }
 
   static async updateFixedPriceListing(
-    listingId: bigint,
+    listingId: string,
     updateData: Partial<Listing>
   ): Promise<Listing | null> {
     return await ListingModel.findOneAndUpdate(
@@ -36,9 +36,9 @@ export class ListingService {
   }
 
   static async addBidToListing(
-    listingId: bigint,
+    listingId: string,
     bidder: NonNullable<Listing["bids"]>[0]["bidder"],
-    amount: bigint
+    amount: string
   ): Promise<Listing | null> {
     return await ListingModel.findOneAndUpdate(
       { listingId, listingType: "auction" },

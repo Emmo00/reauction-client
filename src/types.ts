@@ -88,20 +88,20 @@ export interface Cache<T = any> {
 }
 
 export interface Listing {
-  listingId: bigint;
-  tokenId: bigint;
+  listingId: string;
+  tokenId: string;
   listingType: "fixed-price" | "auction";
   listingStatus: "active" | "sold" | "cancelled";
   creator: string;
   buyer?: User | { address: string};
-  price?: bigint;
-  highestBid?: bigint;
+  price?: string;
+  highestBid?: string;
   endTime?: string;
   cast: CastResponse;
   auctionStarted: boolean;
   bids?: Array<{
     bidder: User | { address: string};
-    amount: bigint;
+    amount: string;
   }>;
 }
 
