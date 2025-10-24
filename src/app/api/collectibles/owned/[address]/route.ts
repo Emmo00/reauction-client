@@ -5,7 +5,7 @@ import { executeCoinbaseqlQuery } from "@/lib/coinbaseql";
 import { createPublicClient, http, getContract, getAddress, isAddress } from "viem";
 import { getChain, getRPCURL } from "@/lib/constants";
 import connectToDatabase from "@/lib/mongodb";
-import { OwnedCollectiblesCacheService } from "@/lib/cache";
+import { OwnedCollectiblesCacheService } from "@/services/cache";
 import auctionAbi from "@/abis/auction.json";
 import { getFarcasterCastByHash } from "@/lib/neynar";
 

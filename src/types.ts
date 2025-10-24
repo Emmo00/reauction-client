@@ -73,10 +73,28 @@ export interface OwnedCollectiblesError {
 
 export type OwnedCollectiblesResponse = { data: OwnedCollectibles } | OwnedCollectiblesError;
 
+import type { Document } from "mongoose";
+
 // Cache document interface
 export interface Cache<T = any> extends Document {
   key: string;
   data: T;
   createdAt: Date;
   expiresAt: Date;
+}
+
+export interface Listing extends Document {
+  listingId: number;
+  tokenId: number;
+  type: "fixed-price" | "auction";
+  creator: string;
+  price?: string;
+  highestBid?: string;
+  cast: CastResponse;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
+export interface SyncSnapshot extends Document {
+  lastSyncedBlockTimeStamp: string;
 }
