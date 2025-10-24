@@ -5,10 +5,16 @@ import { base, baseSepolia } from "viem/chains";
 export const isProduction = process.env.NODE_ENV === "production";
 
 export const USDC_DECIMALS = 6;
+
 export const AUCTION_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
-export const AUCTION_CONTRACT_ADDRESS_SEPOLIA = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
+export const AUCTION_CONTRACT_ADDRESS_SEPOLIA = "0xfDC71a369E7560A06a0c31F39eAf797E6a019519";
+
 export const COLLECTIBLE_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
-export const COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA = "0xf73Ea33263307A45d73B91a51d9eB99d185025Bc";
+export const COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA = "0x7F8cF2c1FB0A710d71173049816Fd96b4a708d81";
+
+export const USDC_CONTRACT_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+export const USDC_CONTRACT_ADDRESS_SEPOLIA = "0xa3d69B7217B096709170f6fc50535e6aBc084f3A";
+
 // Blockchain configuration
 export const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
 export const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";

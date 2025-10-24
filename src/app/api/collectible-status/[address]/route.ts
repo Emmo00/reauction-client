@@ -56,7 +56,6 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
       WHERE address = '${auctionContractAddress}'
         AND (
           (event_name = 'ListingCreated' AND parameters['creator'] = '${lowerAddress}') OR
-          (event_name = 'ListingCreated' AND parameters['seller'] = '${lowerAddress}') OR
           (event_name = 'AuctionStarted' AND parameters['creator'] = '${lowerAddress}') OR
           (event_name = 'ListingPurchased' AND parameters['creator'] = '${lowerAddress}') OR
           (event_name = 'AuctionSettled' AND parameters['creator'] = '${lowerAddress}') OR
