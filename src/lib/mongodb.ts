@@ -25,6 +25,7 @@ if (!cached) {
 }
 
 async function connectToDatabase() {
+  console.log("connecting to database...")
   if (cached.conn) {
     return cached.conn;
   }
@@ -44,6 +45,7 @@ async function connectToDatabase() {
     throw e;
   }
 
+  console.log("connected to database.");
   return cached.conn;
 }
 

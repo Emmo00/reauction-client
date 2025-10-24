@@ -14,6 +14,8 @@ export async function POST(_: NextRequest) {
     // get cached block time from last synced listing for listings
     const syncSnapshot = await SyncSnapshotService.getSnapshot();
 
+    console.log("Current sync snapshot:", syncSnapshot);
+
     if (syncSnapshot?.syncLock) {
       console.log("Sync is already in progress. Exiting.");
       return NextResponse.json({ message: "Sync is already in progress." }, { status: 200 });
@@ -39,11 +41,13 @@ export async function POST(_: NextRequest) {
         block_timestamp
       FROM ${schema}.events
       WHERE
-        contract_address = '${auctionContractAddress}' AND
+        address = '${auctionContractAddress}' AND
         block_timestamp > toDateTime64('${lastSyncedAuctionBlockTime}', 3)
     `;
 
     const newEvents = (await executeCoinbaseqlQuery(newEventsQuery)).result;
+
+    console.log("New events fetched:", newEvents);
 
     // go through list of auction events and update listings db accordingly
     // go throught list of listing events and update listings db accordingly
@@ -88,6 +92,7 @@ export async function POST(_: NextRequest) {
       if (event_name === "BidPlaced") {
         ListingService.updateAuctionListing(Number(parameters?.auctionId), {
           highestBid: BigInt(parameters?.amount!),
+          auctionStarted: true,
         });
 
         ListingService.addBidToListing(
@@ -110,7 +115,7 @@ export async function POST(_: NextRequest) {
           creator: parameters?.creator!,
           price: BigInt(parameters?.startAsk!),
           cast: (await getFarcasterCastByHash(Number(parameters?.tokenId!).toString(16)))!,
-          auctionStarted: false,
+          auctionStarted: true,
         });
       }
 
@@ -132,6 +137,8 @@ export async function POST(_: NextRequest) {
       }
     }
 
+    console.log("Listings updated based on new events.");
+
     // update last synced block time
     const latestBlockTime = newEvents.reduce((latest, event) => {
       const eventTime = new Date(event.block_timestamp!).getTime();
@@ -139,6 +146,8 @@ export async function POST(_: NextRequest) {
     }, new Date(lastSyncedAuctionBlockTime).getTime());
 
     if (latestBlockTime > new Date(lastSyncedAuctionBlockTime).getTime()) {
+      console.log("Updating last synced block time to:", new Date(latestBlockTime).toISOString());
+
       await SyncSnapshotService.updateSnapshot({
         lastSyncedBlockTimeStamp: new Date(latestBlockTime)
           .toISOString()
@@ -147,6 +156,8 @@ export async function POST(_: NextRequest) {
           .split(".")[0], // "2025-09-08 08:23:43"
       });
     }
+
+    console.log("Sync snapshot updated.");
 
     return NextResponse.json({ message: "Listings synced successfully." }, { status: 200 });
   } catch (error) {
