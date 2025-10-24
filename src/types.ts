@@ -1,6 +1,6 @@
 // Type definitions for the collectible status API
 
-import { CastResponse } from "@neynar/nodejs-sdk/build/api";
+import { CastResponse, User } from "@neynar/nodejs-sdk/build/api";
 
 export interface CollectibleStatusError {
   error: string;
@@ -27,6 +27,12 @@ export interface SqlApiResponse {
       auctionId?: string;
       from?: string;
       to?: string;
+      highestBid?: string;
+      startAsk?: string;
+      amount?: string;
+      endTime?: string;
+      bidder?: string;
+      buyer?: string;
     };
     block_timestamp?: string;
     collectible_address?: string;
@@ -73,28 +79,33 @@ export interface OwnedCollectiblesError {
 
 export type OwnedCollectiblesResponse = { data: OwnedCollectibles } | OwnedCollectiblesError;
 
-import type { Document } from "mongoose";
-
 // Cache document interface
-export interface Cache<T = any> extends Document {
+export interface Cache<T = any> {
   key: string;
   data: T;
   createdAt: Date;
   expiresAt: Date;
 }
 
-export interface Listing extends Document {
+export interface Listing {
   listingId: number;
   tokenId: number;
-  type: "fixed-price" | "auction";
+  listingType: "fixed-price" | "auction";
+  listingStatus: "active" | "sold" | "cancelled";
   creator: string;
-  price?: string;
-  highestBid?: string;
+  buyer?: User | { address: string};
+  price?: bigint;
+  highestBid?: bigint;
+  endTime?: string;
   cast: CastResponse;
-  createdAt: Date;
-  expiresAt: Date;
+  auctionStarted: boolean;
+  bids?: Array<{
+    bidder: User | { address: string};
+    amount: bigint;
+  }>;
 }
 
-export interface SyncSnapshot extends Document {
+export interface SyncSnapshot {
+  syncLock: boolean;
   lastSyncedBlockTimeStamp: string;
 }

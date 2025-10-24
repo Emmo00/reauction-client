@@ -11,11 +11,24 @@ export class ListingService {
     return await ListingModel.findOne({ listingId });
   }
 
-  static async updateListing(
+  static async updateAuctionListing(
     listingId: number,
     updateData: Partial<Listing>
   ): Promise<Listing | null> {
-    return await ListingModel.findOneAndUpdate({ listingId }, updateData, { new: true });
+    return await ListingModel.findOneAndUpdate({ listingId, listingType: "auction" }, updateData, {
+      new: true,
+    });
+  }
+
+  static async updateFixedPriceListing(
+    listingId: number,
+    updateData: Partial<Listing>
+  ): Promise<Listing | null> {
+    return await ListingModel.findOneAndUpdate(
+      { listingId, listingType: "fixed-price" },
+      updateData,
+      { new: true }
+    );
   }
 
   static async deleteListing(listingId: number): Promise<void> {
@@ -24,6 +37,18 @@ export class ListingService {
 
   static async deleteManyListings(listingIds: number[]): Promise<void> {
     await ListingModel.deleteMany({ listingId: { $in: listingIds } });
+  }
+
+  static async addBidToListing(
+    listingId: number,
+    bidder: NonNullable<Listing["bids"]>[0]["bidder"],
+    amount: bigint
+  ): Promise<Listing | null> {
+    return await ListingModel.findOneAndUpdate(
+      { listingId, listingType: "auction" },
+      { $push: { bids: { bidder, amount } } },
+      { new: true }
+    );
   }
 
   static async listingExists(listingId: number): Promise<boolean> {

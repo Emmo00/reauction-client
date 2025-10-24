@@ -1,7 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import type { Cache } from "@/types";
+import type { Document } from "mongoose";
 
-const CacheSchema = new Schema<Cache>({
+const CacheSchema = new Schema<Cache & Document>({
   key: {
     type: String,
     required: true,
