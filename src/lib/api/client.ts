@@ -84,4 +84,8 @@ export const queryKeys = {
     all: ['farcaster-address'] as const,
     byFid: (fid: number) => [...queryKeys.farcasterAddress.all, fid] as const,
   },
+  listings: {
+    all: ['listings'] as const,
+    byType: ({ limit, page, listingType }: { limit: number; page: number; listingType?: "auction" | "fixed-price" }) => [...queryKeys.listings.all, { limit, page, listingType }] as const,
+  },
 } as const;
