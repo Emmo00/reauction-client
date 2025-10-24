@@ -45,7 +45,7 @@ export async function POST(_: NextRequest) {
         block_timestamp > toDateTime64('${lastSyncedAuctionBlockTime}', 3)
     `;
 
-    const newEvents = (await executeCoinbaseqlQuery(newEventsQuery)).result;
+    const newEvents = (await executeCoinbaseqlQuery(newEventsQuery)).result ?? [];
 
     console.log("New events fetched:", newEvents);
 
@@ -56,15 +56,21 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "AuctionStarted") {
         // create new listing
-        ListingService.createListing({
-          listingId: Number(parameters?.auctionId),
-          tokenId: Number(parameters?.tokenId),
+        const castHash = BigInt(parameters?.tokenId!).toString(16);
+        console.log("cast hash", castHash);
+        const cast = (await getFarcasterCastByHash(castHash))!;
+
+        console.log("fetched cast", cast);
+
+        await ListingService.createListing({
+          listingId: BigInt(parameters?.auctionId!),
+          tokenId: BigInt(parameters?.tokenId!),
           listingType: "auction",
           listingStatus: "active",
           creator: parameters?.creator!,
           price: BigInt(parameters?.startAsk!),
-          highestBid: BigInt(parameters?.highestBid!),
-          cast: (await getFarcasterCastByHash(Number(parameters?.tokenId!).toString(16)))!,
+          highestBid: BigInt(parameters?.startAsk!),
+          cast,
           auctionStarted: false,
           endTime: parameters?.endTime!,
         });
@@ -72,7 +78,7 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "AuctionSettled") {
         // mark listing as sold
-        ListingService.updateAuctionListing(Number(parameters?.auctionId), {
+        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
           listingStatus: "sold",
           highestBid: BigInt(parameters?.amount!),
           buyer: (await getFarcasterUserByWalletAddress(parameters?.winner!)) || {
@@ -83,20 +89,20 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "AuctionCancelled") {
         // mark listing as cancelled
-        ListingService.updateAuctionListing(Number(parameters?.auctionId), {
+        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
           listingStatus: "cancelled",
         });
       }
 
       // update highest bid price by fetching the BidPlaced events for each active auction (after last synced time)
       if (event_name === "BidPlaced") {
-        ListingService.updateAuctionListing(Number(parameters?.auctionId), {
+        await ListingService.updateAuctionListing(BigInt(parameters?.auctionId!), {
           highestBid: BigInt(parameters?.amount!),
           auctionStarted: true,
         });
 
-        ListingService.addBidToListing(
-          Number(parameters?.auctionId),
+        await ListingService.addBidToListing(
+          BigInt(parameters?.auctionId!),
           (await getFarcasterUserByWalletAddress(parameters?.bidder!)) || {
             address: parameters?.bidder!,
           },
@@ -107,21 +113,21 @@ export async function POST(_: NextRequest) {
       // go through list of listing events and update listings db accordingly
       if (event_name === "ListingCreated") {
         // create new listing
-        ListingService.createListing({
-          listingId: Number(parameters?.listingId),
-          tokenId: Number(parameters?.tokenId),
+        await ListingService.createListing({
+          listingId: BigInt(parameters?.listingId!),
+          tokenId: BigInt(parameters?.tokenId!),
           listingType: "fixed-price",
           listingStatus: "active",
           creator: parameters?.creator!,
           price: BigInt(parameters?.startAsk!),
-          cast: (await getFarcasterCastByHash(Number(parameters?.tokenId!).toString(16)))!,
+          cast: (await getFarcasterCastByHash(BigInt(parameters?.tokenId!).toString(16)))!,
           auctionStarted: true,
         });
       }
 
       if (event_name === "ListingPurchased") {
         // mark listing as sold
-        ListingService.updateFixedPriceListing(Number(parameters?.listingId), {
+        await ListingService.updateFixedPriceListing(BigInt(parameters?.listingId!), {
           listingStatus: "sold",
           buyer: (await getFarcasterUserByWalletAddress(parameters?.buyer!)) || {
             address: parameters?.buyer!,
@@ -131,7 +137,7 @@ export async function POST(_: NextRequest) {
 
       if (event_name === "ListingCancelled") {
         // mark listing as cancelled
-        ListingService.updateFixedPriceListing(Number(parameters?.listingId), {
+        await ListingService.updateFixedPriceListing(BigInt(parameters?.listingId!), {
           listingStatus: "cancelled",
         });
       }

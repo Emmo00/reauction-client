@@ -5,11 +5,11 @@ import type { Document } from "mongoose";
 const ListingSchema = new Schema<Listing & Document>(
   {
     tokenId: {
-      type: Number,
+      type: BigInt,
       required: true,
     },
     listingId: {
-      type: Number,
+      type: BigInt,
       required: true,
     },
     creator: {

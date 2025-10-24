@@ -44,9 +44,9 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
               Edit
             </button>
           </div>
-          <div className="flex items-center gap-3 p-4">
-            <div className="h-12 w-12 overflow-hidden rounded-lg">
-              {collectible?.cast && <CollectibleImage cast={collectible.cast} size={50} />}
+          <div className="flex flex-col justify-center items-center gap-2 p-4">
+            <div className="w-full justify-center rounded-lg">
+              {collectible?.cast && <CollectibleImage cast={collectible.cast} size={290} className="w-full m-auto" />}
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm group-hover:text-purple-300">
@@ -56,7 +56,7 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
                   : "Unknown"}{" "}
                 by {collectible?.cast?.cast.author.display_name || "Unknown Author"}
               </h3>
-              <p className="text-sm text-gray-400">{collectible?.cast?.cast?.text ?? "Unknown"}</p>
+              <p className="text-sm text-gray-400 overflow-hidden">{collectible?.cast?.cast?.text ?? "Unknown"}</p>
             </div>
           </div>
         </div>

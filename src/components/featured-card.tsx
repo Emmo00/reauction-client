@@ -1,3 +1,5 @@
+"use client";
+
 import { DollarSign, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";

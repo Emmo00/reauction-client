@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ListingService } from "@/services/listing";
+import connectToDatabase from "@/lib/mongodb";
 
 export async function GET(req: NextRequest) {
   try {
+    await connectToDatabase();
+    
     const { searchParams } = req.nextUrl;
     const limitParam = searchParams.get("limit");
     const pageParam = searchParams.get("page");
@@ -18,7 +21,6 @@ export async function GET(req: NextRequest) {
       listingType ? { limit, page, listingType } : { limit, page }
     );
 
-    console.log("listings", listings);
     const totalCount = await ListingService.countListings(listingType ? { listingType } : {});
 
     return NextResponse.json({ listings, totalCount, hasMore: totalCount > page * limit });

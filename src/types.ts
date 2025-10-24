@@ -88,8 +88,8 @@ export interface Cache<T = any> {
 }
 
 export interface Listing {
-  listingId: number;
-  tokenId: number;
+  listingId: bigint;
+  tokenId: bigint;
   listingType: "fixed-price" | "auction";
   listingStatus: "active" | "sold" | "cancelled";
   creator: string;

@@ -16,7 +16,7 @@ export class ListingService {
   }
 
   static async updateAuctionListing(
-    listingId: number,
+    listingId: bigint,
     updateData: Partial<Listing>
   ): Promise<Listing | null> {
     return await ListingModel.findOneAndUpdate({ listingId, listingType: "auction" }, updateData, {
@@ -25,7 +25,7 @@ export class ListingService {
   }
 
   static async updateFixedPriceListing(
-    listingId: number,
+    listingId: bigint,
     updateData: Partial<Listing>
   ): Promise<Listing | null> {
     return await ListingModel.findOneAndUpdate(
@@ -36,7 +36,7 @@ export class ListingService {
   }
 
   static async addBidToListing(
-    listingId: number,
+    listingId: bigint,
     bidder: NonNullable<Listing["bids"]>[0]["bidder"],
     amount: bigint
   ): Promise<Listing | null> {
