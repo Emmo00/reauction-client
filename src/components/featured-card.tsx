@@ -17,19 +17,19 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
             {listing.listingType == "auction" && <Zap className="h-4 w-4" />}
             {listing.listingType == "fixed-price" && <DollarSign className="h-4 w-4" />}
             <span className="text-xs">
-              {listing.listingType == "auction" ? "Current Bid" : "Buy Now"}
+              {listing.listingType == "auction" ? "Current Bid" : "Price"}
             </span>
           </div>
           <p className="text-xl font-bold text-white">
             {listing.listingType == "auction" ? listing.highestBid : listing.price} USDC
           </p>
         </div>
-        <Link href="/collectible/102" className="cursor-pointer">
+        <Link href={`/listing/${listing.listingId}`} className="cursor-pointer">
           <Button
             size="sm"
             className="cursor-pointer rounded-full bg-white px-6 text-sm font-semibold text-black hover:bg-white/90"
           >
-            Place Bid
+            {listing.listingType == "auction" ? "Place Bid" : "Buy Now"}
           </Button>
         </Link>
       </div>

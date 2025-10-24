@@ -12,7 +12,8 @@ import type { Listing } from "@/types";
 export default function HomePage() {
   const [listingType, setListingType] = useState<"auction" | "fixed-price" | undefined>(undefined);
   const [listings, setListings] = useState<Listing[]>([]);
-  const { data, isLoading, error } = useListings({ limit: 10, page: 1, listingType });
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error } = useListings({ limit: 10, page, listingType });
 
   return (
     <>

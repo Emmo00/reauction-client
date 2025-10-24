@@ -17,6 +17,8 @@ export async function GET(req: NextRequest) {
     const listings = await ListingService.getListings(
       listingType ? { limit, page, listingType } : { limit, page }
     );
+
+    console.log("listings", listings);
     const totalCount = await ListingService.countListings(listingType ? { listingType } : {});
 
     return NextResponse.json({ listings, totalCount, hasMore: totalCount > page * limit });
