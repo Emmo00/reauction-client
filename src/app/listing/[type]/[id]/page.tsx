@@ -132,7 +132,13 @@ export default function ListingPage() {
             <div className="rounded-2xl bg-card p-4">
               <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                 <Zap className="h-4 w-4" />
-                <span className="text-xs">{type === "auction" ? "Highest Bid" : "Price"}</span>
+                <span className="text-xs">
+                  {type === "auction"
+                    ? listing?.bids?.length == 0
+                      ? "Start Ask"
+                      : "Highest Bid"
+                    : "Price"}
+                </span>
               </div>
               <p className="text-lg font-bold text-foreground">
                 {unitsToUSDC(type === "auction" ? listing.highestBid || "0" : listing.price || "0")}{" "}
