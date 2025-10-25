@@ -35,7 +35,6 @@ export type ListingData = {
   collectible: Collection | null;
   listingType: ListingType;
   price?: string;
-  startingPrice?: string;
   duration?: string;
 };
 
@@ -136,12 +135,6 @@ export function CreateFlow() {
 
     console.log("listing data", listingData);
 
-    console.log("args", [
-      BigInt(listingData.collectible?.cast?.cast.hash!),
-      parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
-      Number(listingData.duration) * 24 * 60 * 60,
-    ]);
-
     const contractAddress = getAuctionContractAddress();
     writeContract({
       address: contractAddress as `0x${string}`,
@@ -149,7 +142,6 @@ export function CreateFlow() {
       functionName: "startAuction",
       args: [
         BigInt(listingData.collectible?.cast?.cast.hash!),
-        parseFloat(listingData.startingPrice || "0") * 10 ** USDC_DECIMALS,
         Number(listingData.duration) * 24 * 60 * 60,
       ],
     });

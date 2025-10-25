@@ -11,9 +11,11 @@ import { CollectibleImage } from "@/components/collectible-image";
 import { useCollectibleOwner } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { useParams } from "next/navigation";
 
-export default function CollectiblePage({ params }: { params: any}) {
-  const { hash } = params;
+export default function CollectiblePage() {
+  const params = useParams();
+  const hash = params.hash as string;
   const { data, error } = useCollectible(hash);
   const ownerQuery = useCollectibleOwner(hash);
 

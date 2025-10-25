@@ -14,8 +14,15 @@ interface ReviewConfirmProps {
   error?: string | null;
 }
 
-export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoading = false, error }: ReviewConfirmProps) {
-  const { collectible, listingType, price, startingPrice, duration } = listingData;
+export function ReviewConfirm({
+  listingData,
+  onConfirm,
+  onBack,
+  onEdit,
+  isLoading = false,
+  error,
+}: ReviewConfirmProps) {
+  const { collectible, listingType, price, duration } = listingData;
 
   return (
     <div className="min-h-screen px-6 py-8">
@@ -46,7 +53,9 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
           </div>
           <div className="flex flex-col justify-center items-center gap-2 p-4">
             <div className="w-full justify-center rounded-lg">
-              {collectible?.cast && <CollectibleImage cast={collectible.cast} size={290} className="w-full m-auto" />}
+              {collectible?.cast && (
+                <CollectibleImage cast={collectible.cast} size={290} className="w-full m-auto" />
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm group-hover:text-purple-300">
@@ -56,7 +65,9 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
                   : "Unknown"}{" "}
                 by {collectible?.cast?.cast.author.display_name || "Unknown Author"}
               </h3>
-              <p className="text-sm text-gray-400 overflow-hidden">{collectible?.cast?.cast?.text ?? "Unknown"}</p>
+              <p className="text-sm text-gray-400 overflow-hidden">
+                {collectible?.cast?.cast?.text ?? "Unknown"}
+              </p>
             </div>
           </div>
         </div>
@@ -94,20 +105,12 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
           </div>
           <div className="space-y-3 p-4">
             {listingType === "auction" ? (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Starting Price:</span>
-                  <span className="font-medium text-white">
-                    {startingPrice || "No minimum"} USDC
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Duration:</span>
-                  <span className="font-medium text-white">
-                    {duration} {duration === "1" ? "day" : "days"}
-                  </span>
-                </div>
-              </>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Duration:</span>
+                <span className="font-medium text-white">
+                  {duration} {duration === "1" ? "day" : "days"}
+                </span>
+              </div>
             ) : (
               <div className="flex justify-between">
                 <span className="text-gray-400">Price:</span>
@@ -128,7 +131,9 @@ export function ReviewConfirm({ listingData, onConfirm, onBack, onEdit, isLoadin
           {isLoading ? (
             <div className="flex items-center gap-3">
               <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />
-              <span>Creating {listingData.listingType === "auction" ? "Auction" : "Listing"}...</span>
+              <span>
+                Creating {listingData.listingType === "auction" ? "Auction" : "Listing"}...
+              </span>
             </div>
           ) : (
             `Create ${listingData.listingType === "auction" ? " Auction" : "Listing"}`
