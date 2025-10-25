@@ -12,10 +12,15 @@ import { useAccount, useConnect, useWaitForTransactionReceipt, useWriteContract 
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import auctionAbi from "@/abis/auction.json";
 import collectibleAbi from "@/abis/collectible.json";
-import { getAuctionContractAddress, getCollectibleContractAddress, USDC_DECIMALS } from "@/lib/constants";
+import {
+  getAuctionContractAddress,
+  getCollectibleContractAddress,
+  USDC_DECIMALS,
+} from "@/lib/constants";
 import { AlertTriangle, X, Loader2, Check, Shield, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { syncListings } from "@/lib/api/sync";
 
 export type ListingType = "auction" | "fixed" | null;
 export type Collection = {
@@ -57,10 +62,10 @@ export function CreateFlow() {
   });
 
   // Approval transaction hook
-  const { 
-    writeContract: writeApproval, 
-    data: approvalHash, 
-    error: approvalError 
+  const {
+    writeContract: writeApproval,
+    data: approvalHash,
+    error: approvalError,
   } = useWriteContract();
   const {
     isLoading: isApprovingConfirming,
@@ -219,6 +224,12 @@ export function CreateFlow() {
           return;
       }
 
+      try {
+        syncListings();
+      } catch (e) {
+        console.error("Error syncing listings:", e);
+      }
+      
       setHasSignedTransaction(true);
     } catch (e) {
       console.error("Error creating listing:", e);
@@ -356,27 +367,34 @@ export function CreateFlow() {
         <DialogContent className="sm:max-w-md">
           <div className="relative overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
-            
+
             <div className="relative z-10 p-6">
               <DialogHeader className="text-center mb-6">
                 <DialogTitle className="text-xl font-semibold text-slate-200 mb-2">
-                  {modalStep === 1 ? 'Approve NFT Transfer' : 'Create Listing'}
+                  {modalStep === 1 ? "Approve NFT Transfer" : "Create Listing"}
                 </DialogTitle>
                 <p className="text-sm text-slate-400">
-                  {modalStep === 1 
-                    ? 'First, approve the contract to transfer your NFT'
-                    : 'Now creating your listing on the marketplace'
-                  }
+                  {modalStep === 1
+                    ? "First, approve the contract to transfer your NFT"
+                    : "Now creating your listing on the marketplace"}
                 </p>
               </DialogHeader>
 
               <div className="space-y-4">
                 {/* Step indicators */}
                 <div className="flex items-center justify-center space-x-4 mb-6">
-                  <div className={`flex items-center space-x-2 ${modalStep >= 1 ? 'text-blue-400' : 'text-slate-500'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                      modalStep >= 1 ? 'border-blue-400 bg-blue-400/20' : 'border-slate-500 bg-slate-500/20'
-                    }`}>
+                  <div
+                    className={`flex items-center space-x-2 ${
+                      modalStep >= 1 ? "text-blue-400" : "text-slate-500"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                        modalStep >= 1
+                          ? "border-blue-400 bg-blue-400/20"
+                          : "border-slate-500 bg-slate-500/20"
+                      }`}
+                    >
                       {isApprovalConfirmed ? (
                         <Check className="w-4 h-4" />
                       ) : modalStep === 1 ? (
@@ -387,13 +405,21 @@ export function CreateFlow() {
                     </div>
                     <span className="text-sm font-medium">Approve</span>
                   </div>
-                  
-                  <div className={`w-8 h-0.5 ${modalStep >= 2 ? 'bg-blue-400' : 'bg-slate-600'}`} />
-                  
-                  <div className={`flex items-center space-x-2 ${modalStep >= 2 ? 'text-blue-400' : 'text-slate-500'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                      modalStep >= 2 ? 'border-blue-400 bg-blue-400/20' : 'border-slate-500 bg-slate-500/20'
-                    }`}>
+
+                  <div className={`w-8 h-0.5 ${modalStep >= 2 ? "bg-blue-400" : "bg-slate-600"}`} />
+
+                  <div
+                    className={`flex items-center space-x-2 ${
+                      modalStep >= 2 ? "text-blue-400" : "text-slate-500"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                        modalStep >= 2
+                          ? "border-blue-400 bg-blue-400/20"
+                          : "border-slate-500 bg-slate-500/20"
+                      }`}
+                    >
                       {isConfirmed ? (
                         <Check className="w-4 h-4" />
                       ) : modalStep === 2 ? (
@@ -413,9 +439,12 @@ export function CreateFlow() {
                       <Shield className="w-8 h-8 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-slate-200 mb-2">NFT Approval Required</h3>
+                      <h3 className="text-lg font-medium text-slate-200 mb-2">
+                        NFT Approval Required
+                      </h3>
                       <p className="text-sm text-slate-400 mb-4">
-                        Allow the marketplace to transfer your collectible when someone purchases it.
+                        Allow the marketplace to transfer your collectible when someone purchases
+                        it.
                       </p>
                       <Button
                         onClick={handleApproveNFT}
@@ -428,7 +457,7 @@ export function CreateFlow() {
                             Approving...
                           </>
                         ) : (
-                          'Approve NFT Transfer'
+                          "Approve NFT Transfer"
                         )}
                       </Button>
                     </div>
@@ -442,12 +471,13 @@ export function CreateFlow() {
                       <Gavel className="w-8 h-8 text-green-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-slate-200 mb-2">Creating Your Listing</h3>
+                      <h3 className="text-lg font-medium text-slate-200 mb-2">
+                        Creating Your Listing
+                      </h3>
                       <p className="text-sm text-slate-400 mb-4">
-                        {listingData.listingType === 'auction' 
-                          ? 'Starting your auction on the marketplace...' 
-                          : 'Creating your fixed-price listing...'
-                        }
+                        {listingData.listingType === "auction"
+                          ? "Starting your auction on the marketplace..."
+                          : "Creating your fixed-price listing..."}
                       </p>
                       {approvalTxHash && (
                         <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 mb-4">

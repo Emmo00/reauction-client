@@ -9,12 +9,12 @@ import { unitsToUSDC } from "@/lib/utils";
 
 export function FeaturedCard({ listing }: { listing: Listing }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600 p-6">
-      <div className="mb-4 aspect-square overflow-hidden rounded-2xl">
-        <CollectibleImage size={300} cast={listing.cast} className="h-full w-full object-cover" />
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600">
+      <div className="mb-4 aspect-square overflow-hidden">
+        <CollectibleImage size={350} cast={listing.cast} className="h-full w-full object-cover" />
       </div>
 
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between px-4 pb-2">
         <div>
           <div className="mb-1 flex items-center gap-2 text-white/80">
             {listing.listingType == "auction" && <Zap className="h-4 w-4" />}
@@ -30,7 +30,10 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
             USDC
           </p>
         </div>
-        <Link href={`/listing/${listing.listingId}`} className="cursor-pointer">
+        <Link
+          href={`/listing/${listing.listingType}/${listing.listingId}`}
+          className="cursor-pointer"
+        >
           <Button
             size="sm"
             className="cursor-pointer rounded-full bg-white px-6 text-sm font-semibold text-black hover:bg-white/90"
