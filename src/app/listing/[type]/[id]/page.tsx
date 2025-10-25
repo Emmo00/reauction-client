@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNav } from "@/components/bottom-nav";
 import { useListing } from "@/queries/listing";
 import { CollectibleImage } from "@/components/collectible-image";
-import { useCollectibleOwner } from "@/queries/users";
+import { useFarcasterUserByAddress } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useParams } from "next/navigation";
@@ -19,7 +19,7 @@ export default function ListingPage() {
   const type = params.type as "auction" | "fixed-price";
   const id = params.id as string;
   const { data: listing, error, isLoading } = useListing({ id, type });
-  const ownerQuery = useCollectibleOwner(listing?.cast?.cast.hash || "");
+  const ownerQuery = useFarcasterUserByAddress(listing?.creator || "");
 
   // Type guard to check if owner data is valid (not error)
   const hasValidOwnerData = (
@@ -32,7 +32,7 @@ export default function ListingPage() {
   const isFarcasterUser = (
     data: any
   ): data is { found_on_farcaster: true; username: string } & User => {
-    return hasValidOwnerData(data) && data.found_on_farcaster && "username" in data;
+    return hasValidOwnerData(data) && "username" in data;
   };
 
   if (error) {
@@ -119,7 +119,8 @@ export default function ListingPage() {
             </button>
           </Link>
           <h1 className="text-base font-semibold">
-            #{BigInt(listing.cast.cast.hash).toString().substring(0, 6)} by {listing.cast.cast.author.display_name}
+            #{BigInt(listing.cast.cast.hash).toString().substring(0, 6)} by{" "}
+            {listing.cast.cast.author.display_name}
           </h1>
           <button className="flex h-10 w-10 items-center justify-center rounded-full bg-card"></button>
         </div>
@@ -212,7 +213,7 @@ export default function ListingPage() {
             <TabsContent value="owner" className="mt-4">
               <div className="rounded-2xl bg-card p-4">
                 {hasValidOwnerData(ownerQuery.data) ? (
-                  ownerQuery.data.found_on_farcaster ? (
+                  isFarcasterUser(ownerQuery.data) ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-16 w-16">

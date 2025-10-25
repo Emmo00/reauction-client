@@ -83,6 +83,7 @@ export const queryKeys = {
   farcasterAddress: {
     all: ['farcaster-address'] as const,
     byFid: (fid: number) => [...queryKeys.farcasterAddress.all, fid] as const,
+    userByAddress: (address: string) => [...queryKeys.farcasterAddress.all, 'user', address] as const,
   },
   listings: {
     all: ['listings'] as const,
