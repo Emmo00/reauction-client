@@ -15,6 +15,7 @@ import {
   APP_WEBHOOK_URL,
   APP_ACCOUNT_ASSOCIATION,
 } from "./constants";
+import { formatUnits } from "viem";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -59,4 +60,8 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
       webhookUrl: APP_WEBHOOK_URL,
     },
   };
+}
+
+export function unitsToUSDC(units: string) {
+  return formatUnits(BigInt(units), 6);
 }

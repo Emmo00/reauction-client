@@ -87,5 +87,6 @@ export const queryKeys = {
   listings: {
     all: ['listings'] as const,
     byType: ({ limit, page, listingType }: { limit: number; page: number; listingType?: "auction" | "fixed-price" }) => [...queryKeys.listings.all, { limit, page, listingType }] as const,
+    infinite: ({ limit, listingType }: { limit: number; listingType?: "auction" | "fixed-price" }) => [...queryKeys.listings.all, 'infinite', { limit, listingType }] as const,
   },
 } as const;

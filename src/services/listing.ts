@@ -57,7 +57,7 @@ export class ListingService {
     listingType?: "auction" | "fixed-price";
   }): Promise<Listing[]> {
     const offset = (page - 1) * limit;
-    return await ListingModel.find({ listingType })
+    return await ListingModel.find(listingType ? { listingType } : {})
       .sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)

@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
       listingType ? { limit, page, listingType } : { limit, page }
     );
 
+    console.log(`Fetched ${listings.length} listings from DB`);
+    console.log("listings", listings);
+
     const totalCount = await ListingService.countListings(listingType ? { listingType } : {});
 
     return NextResponse.json({ listings, totalCount, hasMore: totalCount > page * limit });

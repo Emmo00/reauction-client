@@ -5,12 +5,13 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import type { Listing } from "@/types";
 import { CollectibleImage } from "./collectible-image";
+import { unitsToUSDC } from "@/lib/utils";
 
 export function FeaturedCard({ listing }: { listing: Listing }) {
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600 p-6">
       <div className="mb-4 aspect-square overflow-hidden rounded-2xl">
-        <CollectibleImage size={144} cast={listing.cast} className="h-full w-full object-cover" />
+        <CollectibleImage size={300} cast={listing.cast} className="h-full w-full object-cover" />
       </div>
 
       <div className="flex items-end justify-between">
@@ -23,7 +24,10 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
             </span>
           </div>
           <p className="text-xl font-bold text-white">
-            {listing.listingType == "auction" ? listing.highestBid : listing.price} USDC
+            {unitsToUSDC(
+              listing.listingType == "auction" ? listing.highestBid || "0" : listing.price || "0"
+            )}{" "}
+            USDC
           </p>
         </div>
         <Link href={`/listing/${listing.listingId}`} className="cursor-pointer">

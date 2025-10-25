@@ -1,3 +1,5 @@
+"use client";
+
 import { CreateFlow } from "@/components/create-flow";
 import { BottomNav } from "@/components/bottom-nav";
 
