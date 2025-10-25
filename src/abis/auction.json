@@ -1,22 +1,5 @@
 [
   {
-    "type": "constructor",
-    "inputs": [
-      { "name": "_collectibleCast", "type": "address", "internalType": "address" },
-      { "name": "_usdc", "type": "address", "internalType": "address" },
-      { "name": "_treasury", "type": "address", "internalType": "address" },
-      { "name": "_owner", "type": "address", "internalType": "address" }
-    ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "acceptOwnership",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
     "type": "function",
     "name": "auctionConfig",
     "inputs": [],
@@ -46,7 +29,6 @@
     "outputs": [
       { "name": "creator", "type": "address", "internalType": "address" },
       { "name": "tokenId", "type": "uint256", "internalType": "uint256" },
-      { "name": "startAsk", "type": "uint256", "internalType": "uint256" },
       { "name": "highestBidder", "type": "address", "internalType": "address" },
       { "name": "highestBid", "type": "uint256", "internalType": "uint256" },
       { "name": "endTime", "type": "uint256", "internalType": "uint256" },
@@ -134,7 +116,6 @@
         "components": [
           { "name": "creator", "type": "address", "internalType": "address" },
           { "name": "tokenId", "type": "uint256", "internalType": "uint256" },
-          { "name": "startAsk", "type": "uint256", "internalType": "uint256" },
           { "name": "highestBidder", "type": "address", "internalType": "address" },
           { "name": "highestBid", "type": "uint256", "internalType": "uint256" },
           { "name": "endTime", "type": "uint256", "internalType": "uint256" },
@@ -176,6 +157,18 @@
     "inputs": [{ "name": "user", "type": "address", "internalType": "address" }],
     "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      { "name": "_collectible", "type": "address", "internalType": "address" },
+      { "name": "_usdc", "type": "address", "internalType": "address" },
+      { "name": "_treasury", "type": "address", "internalType": "address" },
+      { "name": "_owner", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -241,13 +234,6 @@
     "name": "paused",
     "inputs": [],
     "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "pendingOwner",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
     "stateMutability": "view"
   },
   {
@@ -354,7 +340,6 @@
     "name": "startAuction",
     "inputs": [
       { "name": "tokenId", "type": "uint256", "internalType": "uint256" },
-      { "name": "startAsk", "type": "uint256", "internalType": "uint256" },
       { "name": "duration", "type": "uint256", "internalType": "uint256" }
     ],
     "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
@@ -475,7 +460,6 @@
       { "name": "auctionId", "type": "uint256", "indexed": true, "internalType": "uint256" },
       { "name": "creator", "type": "address", "indexed": true, "internalType": "address" },
       { "name": "tokenId", "type": "uint256", "indexed": true, "internalType": "uint256" },
-      { "name": "startAsk", "type": "uint256", "indexed": false, "internalType": "uint256" },
       { "name": "endTime", "type": "uint256", "indexed": false, "internalType": "uint256" }
     ],
     "anonymous": false
@@ -489,6 +473,12 @@
       { "name": "bidder", "type": "address", "indexed": true, "internalType": "address" },
       { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
     ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [{ "name": "version", "type": "uint64", "indexed": false, "internalType": "uint64" }],
     "anonymous": false
   },
   {
@@ -543,15 +533,6 @@
   },
   {
     "type": "event",
-    "name": "OwnershipTransferStarted",
-    "inputs": [
-      { "name": "previousOwner", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "newOwner", "type": "address", "indexed": true, "internalType": "address" }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       { "name": "previousOwner", "type": "address", "indexed": true, "internalType": "address" },
@@ -594,10 +575,12 @@
   { "type": "error", "name": "InvalidAuctionConfig", "inputs": [] },
   { "type": "error", "name": "InvalidAuctionDuration", "inputs": [] },
   { "type": "error", "name": "InvalidBidAmount", "inputs": [] },
+  { "type": "error", "name": "InvalidInitialization", "inputs": [] },
   { "type": "error", "name": "InvalidListingConfig", "inputs": [] },
   { "type": "error", "name": "InvalidListingPrice", "inputs": [] },
   { "type": "error", "name": "ListingNotActive", "inputs": [] },
   { "type": "error", "name": "NFTNotMinted", "inputs": [] },
+  { "type": "error", "name": "NotInitializing", "inputs": [] },
   {
     "type": "error",
     "name": "OwnableInvalidOwner",
