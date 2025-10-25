@@ -46,6 +46,10 @@ const ListingSchema = new Schema<Listing & Document>(
       type: Object,
       required: false,
     },
+    listingCreatedAt: {
+      type: String,
+      required: true,
+    },
     bids: {
       type: [
         {

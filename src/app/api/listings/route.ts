@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
     );
 
     console.log(`Fetched ${listings.length} listings from DB`);
-    console.log("listings", listings);
 
     const totalCount = await ListingService.countListings(listingType ? { listingType } : {});
 

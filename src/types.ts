@@ -30,6 +30,7 @@ export interface SqlApiResponse {
       highestBid?: string;
       startAsk?: string;
       amount?: string;
+      price?: string;
       endTime?: string;
       bidder?: string;
       buyer?: string;
@@ -99,6 +100,7 @@ export interface Listing {
   endTime?: string;
   cast: CastResponse;
   auctionStarted: boolean;
+  listingCreatedAt: string;
   bids?: Array<{
     bidder: User | { address: string};
     amount: string;

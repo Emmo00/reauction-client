@@ -6,11 +6,17 @@ import Link from "next/link";
 import type { Listing } from "@/types";
 import { CollectibleImage } from "./collectible-image";
 import { unitsToUSDC } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export function FeaturedCard({ listing }: { listing: Listing }) {
+  const router = useRouter();
+
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600">
-      <div className="mb-4 aspect-square overflow-hidden">
+      <div
+        className="mb-4 aspect-square overflow-hidden cursor-pointer"
+        onClick={() => router.push(`/listing/${listing.listingType}/${listing.listingId}`)}
+      >
         <CollectibleImage size={350} cast={listing.cast} className="h-full w-full object-cover" />
       </div>
 

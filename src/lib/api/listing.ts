@@ -25,6 +25,21 @@ export class ListingAPI {
       `/listings?${params.toString()}`
     );
   }
+
+  static async fetchListingById({
+    id,
+    type,
+  }: {
+    id: string;
+    type: "auction" | "fixed-price";
+  }) {
+    const params = new URLSearchParams();
+    params.append("type", type);
+
+    return APIClient.get<Listing>(
+      `/listings/${id}?${params.toString()}`
+    );
+  }
 }
 
 export const listingQueryKeys = queryKeys.listings;

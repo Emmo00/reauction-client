@@ -52,7 +52,7 @@ export async function POST(_: NextRequest) {
     // go through list of auction events and update listings db accordingly
     // go throught list of listing events and update listings db accordingly
     for (const event of newEvents) {
-      const { event_name, parameters } = event;
+      const { event_name, parameters, block_timestamp } = event;
 
       if (event_name === "AuctionStarted") {
         // create new listing
@@ -73,6 +73,7 @@ export async function POST(_: NextRequest) {
           cast,
           auctionStarted: false,
           endTime: parameters?.endTime!,
+          listingCreatedAt: block_timestamp!,
         });
       }
 
@@ -119,9 +120,10 @@ export async function POST(_: NextRequest) {
           listingType: "fixed-price",
           listingStatus: "active",
           creator: parameters?.creator!,
-          price: parameters?.startAsk!,
+          price: parameters?.price!,
           cast: (await getFarcasterCastByHash(BigInt(parameters?.tokenId!).toString(16)))!,
           auctionStarted: true,
+          listingCreatedAt: block_timestamp!,
         });
       }
 

@@ -45,3 +45,19 @@ export function useInfiniteListings({
     gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
   });
 }
+
+export function useListing({
+  id,
+  type,
+}: {
+  id: string;
+  type: "auction" | "fixed-price";
+}) {
+  return useQuery({
+    queryKey: listingQueryKeys.byId({ id, type }),
+    queryFn: () => ListingAPI.fetchListingById({ id, type }),
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    enabled: !!id && !!type, // Only run query if both id and type are provided
+  });
+}

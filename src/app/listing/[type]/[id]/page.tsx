@@ -6,16 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNav } from "@/components/bottom-nav";
-import { useCollectible } from "@/queries/casts";
+import { useListing } from "@/queries/listing";
 import { CollectibleImage } from "@/components/collectible-image";
 import { useCollectibleOwner } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { useParams } from "next/navigation";
+import { unitsToUSDC } from "@/lib/utils";
 
-export default function CollectiblePage({ params }: { params: any }) {
-  const { hash } = params;
-  const { data, error } = useCollectible(hash);
-  const ownerQuery = useCollectibleOwner(hash);
+export default function ListingPage() {
+  const params = useParams();
+  const type = params.type as "auction" | "fixed-price";
+  const id = params.id as string;
+  const { data: listing, error, isLoading } = useListing({ id, type });
+  const ownerQuery = useCollectibleOwner(listing?.cast?.cast.hash || "");
 
   // Type guard to check if owner data is valid (not error)
   const hasValidOwnerData = (
@@ -52,9 +56,9 @@ export default function CollectiblePage({ params }: { params: any }) {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-foreground">Unable to Load Collectible</h3>
+            <h3 className="text-lg font-semibold text-foreground">Unable to Load Listing</h3>
             <p className="text-sm text-muted-foreground">
-              There was an error loading this collectible. Please try again later.
+              There was an error loading this listing. Please try again later.
             </p>
             <Link href="/home">
               <Button
@@ -70,7 +74,7 @@ export default function CollectiblePage({ params }: { params: any }) {
     );
   }
 
-  if (!data || "error" in data) {
+  if (isLoading || !listing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-8 max-w-md w-full">
@@ -80,8 +84,8 @@ export default function CollectiblePage({ params }: { params: any }) {
               <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Loading Collectible</h3>
-              <p className="text-sm text-muted-foreground">Fetching collectible data...</p>
+              <h3 className="text-lg font-semibold text-foreground">Loading Listing</h3>
+              <p className="text-sm text-muted-foreground">Fetching listing data...</p>
             </div>
             <div className="flex justify-center">
               <div className="flex space-x-1">
@@ -115,57 +119,94 @@ export default function CollectiblePage({ params }: { params: any }) {
             </button>
           </Link>
           <h1 className="text-base font-semibold">
-            #{BigInt(hash).toString().substring(0, 6)} by {data.cast.author.display_name}
+            #{BigInt(listing.cast.cast.hash).toString().substring(0, 6)} by {listing.cast.cast.author.display_name}
           </h1>
           <button className="flex h-10 w-10 items-center justify-center rounded-full bg-card"></button>
         </div>
 
         <div className="px-4 space-y-4">
-          <CollectibleImage cast={data} size={340} className="mx-auto" />
+          {listing.cast && <CollectibleImage cast={listing.cast} size={340} className="mx-auto" />}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-card p-4">
               <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                 <Zap className="h-4 w-4" />
-                <span className="text-xs">Highest Bid</span>
+                <span className="text-xs">{type === "auction" ? "Highest Bid" : "Price"}</span>
               </div>
-              <p className="text-lg font-bold text-foreground">28.14 USDC</p>
+              <p className="text-lg font-bold text-foreground">
+                {unitsToUSDC(type === "auction" ? listing.highestBid || "0" : listing.price || "0")}{" "}
+                USDC
+              </p>
             </div>
             <div className="rounded-2xl bg-card p-4">
               <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span className="text-xs">Ending in</span>
+                <span className="text-xs">{type === "auction" ? "Status" : "Listed"}</span>
               </div>
-              <p className="text-lg font-bold text-foreground">2h 4m 32s</p>
+              <p className="text-lg font-bold text-foreground">
+                {
+                  type === "auction"
+                    ? listing.auctionStarted
+                      ? listing.endTime && new Date(listing.endTime) > new Date()
+                        ? "Active"
+                        : "Ended"
+                      : "Not Started"
+                    : new Date(listing.listingCreatedAt).toLocaleDateString() // placeholder for actual listing date
+                }
+              </p>
             </div>
           </div>
-
+          <Button
+            size="lg"
+            className="h-14 w-full rounded-full text-base font-semibold"
+            disabled={listing.listingStatus !== "active"}
+          >
+            {type === "auction" ? "Place Bid" : "Buy Now"}
+            <span className="ml-2">→</span>
+          </Button>
           <Tabs defaultValue="details" className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-card">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="bids">Bids</TabsTrigger>
-              <TabsTrigger value="owner">Owner</TabsTrigger>
+              <TabsTrigger value="owner">Seller</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-4">
               <div className="rounded-2xl bg-card p-4">
-                <h3 className="mb-2 font-semibold text-foreground">Content</h3>
+                <h3 className="mb-2 font-semibold text-foreground">Description</h3>
                 <p className="text-sm text-muted-foreground">
-                  {data.cast.text || "No description provided."}
+                  {listing.cast?.cast.text || "No description provided."}
                 </p>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  Created on {new Date(parseInt(data.cast.timestamp) * 1000).toLocaleDateString()}{" "}
-                  at {new Date(parseInt(data.cast.timestamp) * 1000).toLocaleTimeString()}.
-                </p>
-                <p
-                  className="mt-4 text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                  onClick={() => {
-                    sdk.actions.viewCast({
-                      hash,
-                    });
-                  }}
-                >
-                  view cast <ArrowUpRightIcon className="inline-block h-4 w-4 mb-1" />
-                </p>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Status:</span>{" "}
+                    {listing.listingStatus}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Type:</span>{" "}
+                    {type === "auction" ? "Auction" : "Fixed Price"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Cast Created:</span>{" "}
+                    {listing.cast?.cast.timestamp
+                      ? new Date(listing.cast.cast.timestamp).toLocaleDateString()
+                      : "Unknown"}{" "}
+                    {listing.cast?.cast.timestamp
+                      ? `at ${new Date(listing.cast.cast.timestamp).toLocaleTimeString()}`
+                      : ""}
+                  </p>
+                  {listing.cast && (
+                    <p
+                      className="text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => {
+                        sdk.actions.viewCast({
+                          hash: listing.cast!.cast.hash,
+                        });
+                      }}
+                    >
+                      view original cast <ArrowUpRightIcon className="inline-block h-4 w-4 mb-1" />
+                    </p>
+                  )}
+                </div>
               </div>
             </TabsContent>
             <TabsContent value="owner" className="mt-4">
@@ -175,7 +216,7 @@ export default function CollectiblePage({ params }: { params: any }) {
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-16 w-16">
-                          <AvatarImage src={ownerQuery.data.pfp_url} alt="Owner avatar" />
+                          <AvatarImage src={ownerQuery.data.pfp_url} alt="Seller avatar" />
                           <AvatarFallback>
                             {ownerQuery.data.display_name?.substring(0, 2).toUpperCase() || "??"}
                           </AvatarFallback>
@@ -232,41 +273,37 @@ export default function CollectiblePage({ params }: { params: any }) {
                       <div className="text-center">
                         <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-3">
                           <span className="text-lg font-mono">
-                            {ownerQuery.data.address?.substring(2, 4).toUpperCase() || "??"}
+                            {listing.creator?.substring(2, 4).toUpperCase() || "??"}
                           </span>
                         </div>
-                        <h4 className="font-semibold text-foreground mb-1">Wallet Owner</h4>
+                        <h4 className="font-semibold text-foreground mb-1">Wallet Seller</h4>
                         <p className="text-sm text-muted-foreground">Not found on Farcaster</p>
                       </div>
-                      {ownerQuery.data.address && (
-                        <>
-                          <div className="bg-muted/50 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground mb-1">Ethereum Address</p>
-                            <p className="text-sm font-mono text-foreground break-all">
-                              {ownerQuery.data.address}
-                            </p>
-                          </div>
-                          <a
-                            href={`https://etherscan.io/address/${ownerQuery.data.address}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors text-center block"
-                          >
-                            View on Etherscan
-                          </a>
-                        </>
-                      )}
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Ethereum Address</p>
+                        <p className="text-sm font-mono text-foreground break-all">
+                          {listing.creator}
+                        </p>
+                      </div>
+                      <a
+                        href={`https://etherscan.io/address/${listing.creator}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors text-center block"
+                      >
+                        View on Etherscan
+                      </a>
                     </div>
                   )
                 ) : ownerQuery.isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">Loading owner information...</p>
+                    <p className="text-sm text-muted-foreground">Loading seller information...</p>
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-sm text-muted-foreground">
-                      Unable to load owner information.
+                      Unable to load seller information.
                     </p>
                   </div>
                 )}
@@ -274,15 +311,48 @@ export default function CollectiblePage({ params }: { params: any }) {
             </TabsContent>
             <TabsContent value="bids" className="mt-4">
               <div className="rounded-2xl bg-card p-4">
-                <p className="text-sm text-muted-foreground">Bid history will be displayed here.</p>
+                {type === "auction" ? (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground">Bid History</h3>
+                    {listing.bids && listing.bids.length > 0 ? (
+                      <div className="space-y-3">
+                        {listing.bids.map((bid, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {bid.amount} USDC
+                              </p>
+                              <p className="text-xs text-muted-foreground">Recent bid</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {"fid" in bid.bidder
+                                ? (bid.bidder as User).username ||
+                                  `${(bid.bidder as any).address?.substring(0, 6)}...`
+                                : `${bid.bidder.address.substring(
+                                    0,
+                                    6
+                                  )}...${bid.bidder.address.substring(
+                                    bid.bidder.address.length - 4
+                                  )}`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No bids yet.</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    This is a fixed-price listing. No bid history available.
+                  </p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
-
-          <Button size="lg" className="h-14 w-full rounded-full text-base font-semibold">
-            Place Bid
-            <span className="ml-2">→</span>
-          </Button>
         </div>
       </div>
       <BottomNav />
