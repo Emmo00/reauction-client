@@ -13,6 +13,7 @@ import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useParams } from "next/navigation";
 import { unitsToUSDC } from "@/lib/utils";
+import { useCountdown } from "@/hooks/useCountdown";
 
 export default function ListingPage() {
   const params = useParams();
@@ -20,6 +21,56 @@ export default function ListingPage() {
   const id = params.id as string;
   const { data: listing, error, isLoading } = useListing({ id, type });
   const ownerQuery = useFarcasterUserByAddress(listing?.creator || "");
+  
+  // Countdown for auction end time
+  const countdown = useCountdown(
+    type === "auction" && listing?.endTime ? listing.endTime : null
+  );
+
+  // Helper function to format countdown display
+  const formatCountdown = () => {
+    console.log(listing);
+    if (countdown.isExpired) {
+      return "Ended";
+    }
+
+    const parts = [];
+    if (countdown.days > 0) parts.push(`${countdown.days}d`);
+    if (countdown.hours > 0) parts.push(`${countdown.hours}h`);
+    if (countdown.minutes > 0) parts.push(`${countdown.minutes}m`);
+    if (countdown.seconds > 0 || parts.length === 0) parts.push(`${countdown.seconds}s`);
+
+    return parts.join(" ");
+  };
+
+  // Helper function to get countdown color based on time remaining
+  const getCountdownColor = () => {
+    if (type !== "auction" || !listing?.auctionStarted || countdown.isExpired) {
+      return "text-foreground";
+    }
+
+    const totalMinutesLeft = countdown.days * 24 * 60 + countdown.hours * 60 + countdown.minutes;
+    
+    if (totalMinutesLeft <= 60) { // Less than 1 hour
+      return "text-red-400";
+    } else if (totalMinutesLeft <= 1440) { // Less than 24 hours
+      return "text-yellow-400";
+    } else {
+      return "text-foreground";
+    }
+  };
+
+  // Helper function to get countdown styles including animation
+  const getCountdownStyles = () => {
+    const baseColor = getCountdownColor();
+    const totalMinutesLeft = countdown.days * 24 * 60 + countdown.hours * 60 + countdown.minutes;
+    
+    if (type === "auction" && listing?.auctionStarted && !countdown.isExpired && totalMinutesLeft <= 60) {
+      return `${baseColor} animate-pulse`; // Add pulse animation for last hour
+    }
+    
+    return baseColor;
+  };
 
   // Type guard to check if owner data is valid (not error)
   const hasValidOwnerData = (
@@ -134,9 +185,7 @@ export default function ListingPage() {
                 <Zap className="h-4 w-4" />
                 <span className="text-xs">
                   {type === "auction"
-                    ? listing?.bids?.length == 0
-                      ? "Start Ask"
-                      : "Highest Bid"
+                    ? "Highest Bid"
                     : "Price"}
                 </span>
               </div>
@@ -148,18 +197,17 @@ export default function ListingPage() {
             <div className="rounded-2xl bg-card p-4">
               <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span className="text-xs">{type === "auction" ? "Status" : "Listed"}</span>
+                <span className="text-xs">
+                  {type === "auction" 
+                    ? listing?.auctionStarted && !countdown.isExpired 
+                      ? "Ends in" 
+                      : "Status"
+                    : "Listed"
+                  }
+                </span>
               </div>
-              <p className="text-lg font-bold text-foreground">
-                {
-                  type === "auction"
-                    ? listing.auctionStarted
-                      ? listing.endTime && new Date(listing.endTime) > new Date()
-                        ? "Active"
-                        : "Ended"
-                      : "Not Started"
-                    : new Date(listing.listingCreatedAt).toLocaleDateString() // placeholder for actual listing date
-                }
+              <p className={`text-lg font-bold ${getCountdownStyles()}`}>
+                {type === "auction" ? formatCountdown() : new Date(listing.listingCreatedAt).toLocaleDateString()}
               </p>
             </div>
           </div>

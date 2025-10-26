@@ -198,7 +198,7 @@ export function CreateFlow() {
     }
   }
 
-  function proceedWithListing() {
+  async function proceedWithListing() {
     try {
       switch (listingData.listingType) {
         case "auction":
@@ -217,7 +217,7 @@ export function CreateFlow() {
       }
 
       try {
-        syncListings();
+        await syncListings();
       } catch (e) {
         console.error("Error syncing listings:", e);
       }

@@ -32,11 +32,6 @@ export const getCollectibleContractAddress = (): string =>
   isProduction ? COLLECTIBLE_CONTRACT_ADDRESS : COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA;
 
 /**
- * Get the appropriate CoinbaSeQL database schema based on environment
- */
-export const getCoinbaseQLSchema = (): string => (isProduction ? "base" : "base_sepolia");
-
-/**
  * Get RPC url based on environment
  */
 export const getRPCURL = (): string => (isProduction ? BASE_RPC_URL : BASE_SEPOLIA_RPC_URL);

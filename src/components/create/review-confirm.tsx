@@ -57,18 +57,16 @@ export function ReviewConfirm({
                 <CollectibleImage cast={collectible.cast} size={290} className="w-full m-auto" />
               )}
             </div>
-            <div>
-              <h3 className="font-semibold text-white text-sm group-hover:text-purple-300">
-                #
-                {collectible?.cast?.cast.hash
-                  ? BigInt(collectible.cast.cast.hash).toString().substring(0, 6)
-                  : "Unknown"}{" "}
-                by {collectible?.cast?.cast.author.display_name || "Unknown Author"}
-              </h3>
-              <p className="text-sm text-gray-400 overflow-hidden">
-                {collectible?.cast?.cast?.text ?? "Unknown"}
-              </p>
-            </div>
+            <h3 className="font-semibold text-white text-sm group-hover:text-purple-300">
+              #
+              {collectible?.cast?.cast.hash
+                ? BigInt(collectible.cast.cast.hash).toString().substring(0, 6)
+                : "Unknown"}{" "}
+              by {collectible?.cast?.cast.author.display_name || "Unknown Author"}
+            </h3>
+            <p className="text-sm text-gray-400 overflow-hidden w-full break-words">
+              {collectible?.cast?.cast?.text ?? "Unknown"}
+            </p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 // Type definitions for the collectible status API
 
 import { CastResponse, User } from "@neynar/nodejs-sdk/build/api";
+import { Hex } from "viem";
 
 export interface CollectibleStatusError {
   error: string;
@@ -14,32 +15,6 @@ export interface CollectibleStatus {
   castsOwned: number;
   castsBeingSold: number;
   castsSold: number;
-}
-
-export interface SqlApiResponse {
-  result: Array<{
-    event_name?: string;
-    parameters?: {
-      creator?: string;
-      winner?: string;
-      tokenId?: string;
-      listingId?: string;
-      auctionId?: string;
-      from?: string;
-      to?: string;
-      highestBid?: string;
-      startAsk?: string;
-      amount?: string;
-      price?: string;
-      endTime?: string;
-      bidder?: string;
-      buyer?: string;
-    };
-    block_timestamp?: string;
-    collectible_address?: string;
-    mint_count?: string | number;
-    [key: string]: any; // Allow additional properties
-  }>;
 }
 
 // Types for owned collectibles API
@@ -94,20 +69,51 @@ export interface Listing {
   listingType: "fixed-price" | "auction";
   listingStatus: "active" | "sold" | "cancelled";
   creator: string;
-  buyer?: User | { address: string};
+  buyer?: User | { address: string };
   price?: string;
   highestBid?: string;
-  endTime?: string;
+  auctionEndTime?: string;
   cast: CastResponse;
   auctionStarted: boolean;
   listingCreatedAt: string;
   bids?: Array<{
-    bidder: User | { address: string};
+    bidder: User | { address: string };
     amount: string;
   }>;
 }
 
 export interface SyncSnapshot {
-  syncLock: boolean;
-  lastSyncedBlockTimeStamp: string;
+  listingSyncLock: boolean;
+  collectibleSyncLock: boolean;
+  lastListingSyncedBlockNumber: number;
+  lastCollectibleSyncedBlockNumber: number;
+}
+
+export interface ParsedEvent {
+  eventName: string;
+  args: { [key: string]: any };
+  transactionHash: Hex;
+  blockNumber: Hex;
+  timeStamp: Hex;
+  data: Hex;
+}
+
+export interface AuctionStartedEvent extends ParsedEvent {
+  eventName: "AuctionStarted";
+  args: {
+    auctionId: bigint;
+    creator: string;
+    tokenId: bigint;
+    endtime: bigint;
+  };
+}
+
+export interface ListingCreatedEvent extends ParsedEvent {
+  eventName: "ListingCreated";
+  args: {
+    listingId: bigint;
+    creator: string;
+    tokenId: bigint;
+    price: bigint;
+  };
 }

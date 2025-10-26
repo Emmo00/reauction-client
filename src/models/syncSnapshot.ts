@@ -4,14 +4,25 @@ import type { Document } from "mongoose";
 
 const SyncSnapshotSchema = new Schema<SyncSnapshot & Document>(
   {
-    syncLock: {
+    listingSyncLock: {
       type: Boolean,
       required: true,
       default: false,
     },
-    lastSyncedBlockTimeStamp: {
-      type: String,
+    lastListingSyncedBlockNumber: {
+      type: Number,
       required: true,
+      default: 0,
+    },
+    collectibleSyncLock: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    lastCollectibleSyncedBlockNumber: {
+      type: Number,
+      required: true,
+      default: 0,
     },
   },
   { timestamps: true }

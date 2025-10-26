@@ -23,6 +23,7 @@ const ListingSchema = new Schema<Listing & Document>(
     highestBid: {
       type: String,
       required: false,
+      default: "0",
     },
     cast: {
       type: Object,
