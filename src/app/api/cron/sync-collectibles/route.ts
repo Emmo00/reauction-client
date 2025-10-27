@@ -43,7 +43,7 @@ export async function POST(_: NextRequest) {
       const { eventName, args } = event;
 
       if (eventName === "Mint") {
-        const { to, tokenId, fid } = args;
+        const { to, tokenId } = args;
 
         if (await CollectibleService.collectibleExists(tokenId)) {
           await CollectibleService.deleteCollectible(tokenId);
@@ -65,7 +65,7 @@ export async function POST(_: NextRequest) {
         // create new collectible entry
         await CollectibleService.createCollectible({
           tokenId,
-          owner: to,
+          owner: to.toLowerCase(),
           cast,
         });
       }
@@ -73,7 +73,7 @@ export async function POST(_: NextRequest) {
         // update collectible ownership
         if (await CollectibleService.collectibleExists(args.tokenId)) {
           await CollectibleService.updateCollectible(args.tokenId, {
-            owner: args.to,
+            owner: args.to.toLowerCase(),
           });
         } else {
           const castHash = BigInt(args.tokenId).toString(16);
@@ -92,7 +92,7 @@ export async function POST(_: NextRequest) {
           // create new collectible entry
           await CollectibleService.createCollectible({
             tokenId: args.tokenId,
-            owner: args.to,
+            owner: args.to.toLowerCase(),
             cast,
           });
         }

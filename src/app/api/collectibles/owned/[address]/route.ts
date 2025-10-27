@@ -33,7 +33,7 @@ export async function GET(
     // Connect to MongoDB for caching
     await connectToDatabase();
 
-    const ownedCollectibles = await CollectibleService.getCollectiblesByOwner(address, {
+    const ownedCollectibles = await CollectibleService.getCollectiblesByOwner(address.toLowerCase(), {
       page,
       limit: perPage,
     });

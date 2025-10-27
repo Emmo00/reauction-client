@@ -11,7 +11,6 @@ export type CollectibleStatusResponse = CollectibleStatus | CollectibleStatusErr
 
 export interface CollectibleStatus {
   address: string;
-  castsCollected: number;
   castsOwned: number;
   castsBeingSold: number;
   castsSold: number;

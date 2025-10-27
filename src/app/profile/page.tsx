@@ -87,12 +87,6 @@ export default function ProfilePage() {
             <div className="grid grid-cols-4 gap-2 w-full max-w-sm mb-4">
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {isLoading ? "..." : hasError ? "?" : status?.castsCollected ?? 0}
-                </p>
-                <p className="text-xs text-muted-foreground">Collected</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
                   {isLoading ? "..." : hasError ? "?" : status?.castsOwned ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Collection</p>
@@ -120,13 +114,13 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <Tabs defaultValue="collected" className="w-full">
+          <Tabs defaultValue="collection" className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-card">
-              <TabsTrigger value="collected">Collected</TabsTrigger>
+              <TabsTrigger value="collection">Collection</TabsTrigger>
               <TabsTrigger value="selling">Selling</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
             </TabsList>
-            <TabsContent value="collected" className="mt-4">
+            <TabsContent value="collection" className="mt-4">
               <div className="grid grid-cols-2 gap-3">
                 {collectibles.map((item) => (
                   <Link key={item.cast.hash} href={`/collectible/${item.cast.hash}`}>

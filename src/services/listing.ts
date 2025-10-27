@@ -48,17 +48,17 @@ export class ListingService {
   }
 
   static async auctionExists(auctionId: string): Promise<boolean> {
-    const auction = await ListingModel.findOne({ 
-      listingId: auctionId, 
-      listingType: "auction" 
+    const auction = await ListingModel.findOne({
+      listingId: auctionId,
+      listingType: "auction",
     });
     return auction !== null;
   }
 
   static async fixedListingExists(listingId: string): Promise<boolean> {
-    const listing = await ListingModel.findOne({ 
-      listingId, 
-      listingType: "fixed-price" 
+    const listing = await ListingModel.findOne({
+      listingId,
+      listingType: "fixed-price",
     });
     return listing !== null;
   }
@@ -86,5 +86,19 @@ export class ListingService {
     listingType?: "auction" | "fixed-price";
   }): Promise<number> {
     return await ListingModel.countDocuments({ listingType });
+  }
+
+  static async getUserCompletedListingsCount(userAddress: string): Promise<number> {
+    return await ListingModel.countDocuments({
+      creator: userAddress,
+      listingStatus: { $in: ["sold", "settled"] },
+    });
+  }
+
+  static async getUserActiveListingsCount(userAddress: string): Promise<number> {
+    return await ListingModel.countDocuments({
+      creator: userAddress,
+      listingStatus: "active",
+    });
   }
 }

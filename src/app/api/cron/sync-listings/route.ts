@@ -62,7 +62,7 @@ export async function POST(_: NextRequest) {
           tokenId: args?.tokenId!,
           listingType: "auction",
           listingStatus: "active",
-          creator: args?.creator!,
+          creator: args?.creator!.toLowerCase(),
           cast,
           auctionStarted: false,
           auctionEndTime: new Date(Number(args?.endTime!) * 1000).toISOString(),
@@ -76,7 +76,7 @@ export async function POST(_: NextRequest) {
           listingStatus: "sold",
           highestBid: args?.amount!,
           buyer: (await getFarcasterUserByWalletAddress(args?.winner!)) || {
-            address: args?.winner!,
+            address: args?.winner!.toLowerCase(),
           },
         });
       }
@@ -98,7 +98,7 @@ export async function POST(_: NextRequest) {
         await ListingService.addBidToListing(
           args?.auctionId!,
           (await getFarcasterUserByWalletAddress(args?.bidder!)) || {
-            address: args?.bidder!,
+            address: args?.bidder!.toLowerCase(),
           },
           args?.amount!
         );
@@ -119,7 +119,7 @@ export async function POST(_: NextRequest) {
           tokenId: args?.tokenId!,
           listingType: "fixed-price",
           listingStatus: "active",
-          creator: args?.creator!,
+          creator: args?.creator!.toLowerCase(),
           price: args?.price!,
           cast: (await getFarcasterCastByHash(BigInt(args?.tokenId!).toString(16)))!,
           auctionStarted: true,
@@ -132,7 +132,7 @@ export async function POST(_: NextRequest) {
         await ListingService.updateFixedPriceListing(args?.listingId!, {
           listingStatus: "sold",
           buyer: (await getFarcasterUserByWalletAddress(args?.buyer!)) || {
-            address: args?.buyer!,
+            address: args?.buyer!.toLowerCase(),
           },
         });
       }
