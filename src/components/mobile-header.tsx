@@ -31,7 +31,7 @@ export function MobileHeader() {
         </div>
       </div>
       <button className="flex h-10 w-10 items-center justify-center rounded-full bg-card">
-        <Grid3x3 className="h-5 w-5" />
+        <img src="/icon.svg" alt="icon" className="h-8 w-8" />
       </button>
     </div>
   );
