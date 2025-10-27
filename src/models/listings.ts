@@ -72,7 +72,6 @@ const ListingSchema = new Schema<Listing & Document>(
 );
 
 // Create compound index for efficient queries
-ListingSchema.index({ listingType: 1 });
 ListingSchema.index({ listingId: 1, listingType: 1 });
 
 const ListingModel = mongoose.models.Listing || mongoose.model<Listing>("Listing", ListingSchema);

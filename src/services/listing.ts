@@ -96,9 +96,15 @@ export class ListingService {
   }
 
   static async getUserActiveListingsCount(userAddress: string): Promise<number> {
-    return await ListingModel.countDocuments({
+    console.log("Counting active listings for user address:", userAddress);
+
+    const count = await ListingModel.countDocuments({
       creator: userAddress,
       listingStatus: "active",
     });
+
+    console.log("Active listings count for", userAddress, "is", count);
+
+    return count;
   }
 }

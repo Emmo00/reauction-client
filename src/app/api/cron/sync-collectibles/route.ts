@@ -49,52 +49,48 @@ export async function POST(_: NextRequest) {
           await CollectibleService.deleteCollectible(tokenId);
         }
 
-        const castHash = BigInt(args.tokenId).toString(16);
+        const castHash = BigInt(args.tokenId).toString(16).padStart(40, '0');
 
-        console.log("Cast hash for missing collectible on transfer:", castHash);
+        console.log("Cast hash for missing collectible on mint:", castHash);
         const cast = (await getFarcasterCastByHash(`0x${castHash}`))!;
         console.log("cast", cast);
 
-        if (!cast) {
-          console.warn(
-            `Cast not found for tokenId ${args.tokenId} during Transfer event processing. Skipping collectible creation.`
-          );
-          continue;
-        }
-
         // create new collectible entry
-        await CollectibleService.createCollectible({
-          tokenId,
-          owner: to.toLowerCase(),
-          cast,
-        });
+        console.log(
+          "created from mint",
+          await CollectibleService.createCollectible({
+            tokenId,
+            owner: to.toLowerCase(),
+            cast,
+          })
+        );
       }
+
       if (eventName === "Transfer") {
         // update collectible ownership
         if (await CollectibleService.collectibleExists(args.tokenId)) {
-          await CollectibleService.updateCollectible(args.tokenId, {
-            owner: args.to.toLowerCase(),
-          });
+          console.log(
+            "updated from transfer",
+            await CollectibleService.updateCollectible(args.tokenId, {
+              owner: args.to.toLowerCase(),
+            })
+          );
         } else {
-          const castHash = BigInt(args.tokenId).toString(16);
+          const castHash = BigInt(args.tokenId).toString(16).padStart(40, '0');
 
           console.log("Cast hash for missing collectible on transfer:", castHash);
           const cast = (await getFarcasterCastByHash(`0x${castHash}`))!;
           console.log("cast", cast);
 
-          if (!cast) {
-            console.warn(
-              `Cast not found for tokenId ${args.tokenId} during Transfer event processing. Skipping collectible creation.`
-            );
-            continue;
-          }
-
           // create new collectible entry
-          await CollectibleService.createCollectible({
-            tokenId: args.tokenId,
-            owner: args.to.toLowerCase(),
-            cast,
-          });
+          console.log(
+            "created from transfer",
+            await CollectibleService.createCollectible({
+              tokenId: args.tokenId,
+              owner: args.to.toLowerCase(),
+              cast,
+            })
+          );
         }
       }
     }

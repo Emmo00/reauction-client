@@ -27,11 +27,12 @@ export async function GET(
     }
 
     console.log(
-      `Fetching owned collectibles for address: ${address}, page: ${page}, perPage: ${perPage}`
+      `Fetching owned collectibles for address: ${address.toLowerCase()}, page: ${page}, perPage: ${perPage}`
     );
 
     // Connect to MongoDB for caching
     await connectToDatabase();
+
 
     const ownedCollectibles = await CollectibleService.getCollectiblesByOwner(
       address.toLowerCase(),

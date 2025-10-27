@@ -21,8 +21,7 @@ const CollectibleSchema = new Schema<Collectible & Document>(
   { timestamps: true }
 );
 
-CollectibleSchema.index({ tokenId: 1 }, { unique: true });
-CollectibleSchema.index({ owner: 1 });
+CollectibleSchema.index({ tokenId: 1, owner: 1 });
 
 export const CollectibleModel =
   mongoose.models.Collectible ||

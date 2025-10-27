@@ -54,9 +54,12 @@ export async function POST(_: NextRequest) {
         if (await ListingService.auctionExists(args?.auctionId)) continue;
 
         // create new listing
-        const castHash = BigInt(args?.tokenId!).toString(16);
+        const castHash = `0x${BigInt(args?.tokenId!).toString(16).padStart(40, '0')}`;
         console.log("cast hash", castHash);
         const cast = (await getFarcasterCastByHash(castHash))!;
+
+        console.log("cast", cast);
+
         await ListingService.createListing({
           listingId: args?.auctionId!,
           tokenId: args?.tokenId!,
@@ -113,6 +116,11 @@ export async function POST(_: NextRequest) {
       // go through list of listing events and update listings db accordingly
       if (eventName === "ListingCreated") {
         if (await ListingService.fixedListingExists(args?.listingId)) continue;
+        const castHash = `0x${BigInt(args?.tokenId!).toString(16).padStart(40, '0')}`;
+        console.log("cast hash", castHash);
+
+        const cast = (await getFarcasterCastByHash(castHash))!;
+        console.log("cast", cast);
         // create new listing
         await ListingService.createListing({
           listingId: args?.listingId!,
@@ -121,7 +129,7 @@ export async function POST(_: NextRequest) {
           listingStatus: "active",
           creator: args?.creator!.toLowerCase(),
           price: args?.price!,
-          cast: (await getFarcasterCastByHash(BigInt(args?.tokenId!).toString(16)))!,
+          cast,
           auctionStarted: true,
           listingCreatedAt: block_timestamp!,
         });

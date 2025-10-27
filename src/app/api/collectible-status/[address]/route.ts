@@ -23,11 +23,9 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
     }
 
     const checksumAddress = getAddress(address);
-    const lowerAddress = checksumAddress.toLowerCase(); // CoinbaSeQL stores addresses in lowercase
+    const lowerAddress = checksumAddress.toLowerCase();
 
-    // Process events to calculate stats
-    const castsBeingSold = await ListingService.getUserActiveListingsCount(lowerAddress);
-    const castsSold = await ListingService.getUserCompletedListingsCount(lowerAddress);
+    console.log("Fetching collectible status for address:", checksumAddress);
 
     const collectibleAddress = getCollectibleContractAddress();
     // Get the collectible contract instance
@@ -37,7 +35,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ addres
       client: getPublicClient(),
     });
 
-    const castsOwned = Number(await collectibleContract.read.balanceOf([checksumAddress]));
+    // Execute all operations concurrently
+    const [castsBeingSold, castsSold, castsOwnedBigInt] = await Promise.all([
+      ListingService.getUserActiveListingsCount(lowerAddress),
+      ListingService.getUserCompletedListingsCount(lowerAddress),
+      collectibleContract.read.balanceOf([checksumAddress]),
+    ]);
+
+    const castsOwned = Number(castsOwnedBigInt);
 
     const collectibleStatus: CollectibleStatus = {
       address: checksumAddress,

@@ -84,7 +84,7 @@ export default function ProfilePage() {
             <h2 className="text-xl font-bold text-foreground">{context?.user?.displayName}</h2>
             <p className="text-sm text-muted-foreground mb-4">@{context?.user?.username}</p>
 
-            <div className="grid grid-cols-4 gap-2 w-full max-w-sm mb-4">
+            <div className="grid grid-cols-3 gap-2 w-full max-w-sm mb-4">
               <div>
                 <p className="text-2xl font-bold text-foreground">
                   {isLoading ? "..." : hasError ? "?" : status?.castsOwned ?? 0}
