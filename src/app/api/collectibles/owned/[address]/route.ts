@@ -33,14 +33,28 @@ export async function GET(
     // Connect to MongoDB for caching
     await connectToDatabase();
 
-    const ownedCollectibles = await CollectibleService.getCollectiblesByOwner(address.toLowerCase(), {
-      page,
-      limit: perPage,
-    });
+    const ownedCollectibles = await CollectibleService.getCollectiblesByOwner(
+      address.toLowerCase(),
+      {
+        page,
+        limit: perPage,
+      }
+    );
+
+    const totalUserCollectibles = await CollectibleService.countCollectiblesByOwner(
+      address.toLowerCase()
+    );
 
     return NextResponse.json({
       success: true,
       data: ownedCollectibles,
+      pagination: {
+        total: totalUserCollectibles,
+        currentPage: page,
+        perPage,
+        hasNextPage: page * perPage < totalUserCollectibles,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching owned collectibles:", error);

@@ -38,7 +38,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
   // Handle data updates
   useEffect(() => {
     if (collectiblesData && "data" in collectiblesData) {
-      const newCasts = collectiblesData.data.casts;
+      const newCasts = collectiblesData.data.map((item) => item.cast);
 
       if (page === 1) {
         // Reset for first page
@@ -48,7 +48,7 @@ export function ChooseCollectible({ onSelect }: ChooseCollectibleProps) {
         setAllCollectibles((prev) => [...prev, ...newCasts]);
       }
 
-      setHasMorePages(collectiblesData.data.pagination.hasNextPage);
+      setHasMorePages(collectiblesData.pagination.hasNextPage);
       setIsLoadingMore(false);
     }
   }, [collectiblesData, page]);

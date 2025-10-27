@@ -85,7 +85,7 @@ export interface Collectible {
   cast: CastResponse;
 }
 
-export type OwnedCollectiblesResponse = { data: Collectible[] } | OwnedCollectiblesError;
+export type OwnedCollectiblesResponse = { data: Collectible[]; pagination: PaginationInfo } | OwnedCollectiblesError;
 
 export interface SyncSnapshot {
   listingSyncLock: boolean;
