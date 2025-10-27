@@ -1,11 +1,11 @@
 import auctionabi from "@/abis/auction.json";
 import collectibleabi from "@/abis/collectible.json";
-import { ParsedEvent } from "@/types";
+import type { ParsedEvent, LogsFromContract } from "@/types";
 import "dotenv/config";
 import { parseEventLogs, RpcLog } from "viem";
 import { getChain } from "@/lib/constants";
 
-const BASE_URL = "https://api.etherscan.io/api";
+const BASE_URL = "https://api.etherscan.io/v2/api";
 const API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
 if (!API_KEY) {
@@ -21,7 +21,7 @@ export async function fetchEtherscanData(
   url.searchParams.append("module", module);
   url.searchParams.append("action", action);
   url.searchParams.append("apikey", API_KEY);
-  url.searchParams.append("chain", getChain().id.toString());
+  url.searchParams.append("chainid", getChain().id.toString());
 
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.append(key, value);
@@ -39,11 +39,12 @@ export async function getContractEvents(
   address: string,
   fromBlock: number | null = null,
   toBlock: number | null = null
-) {
+): Promise<LogsFromContract> {
   const options = {
     fromBlock: fromBlock ? fromBlock.toString() : "null",
     toBlock: toBlock ? toBlock.toString() : "null",
     address,
+    order: 'asc'
   };
 
   return fetchEtherscanData("logs", "getLogs", options);
