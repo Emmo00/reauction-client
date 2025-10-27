@@ -67,7 +67,7 @@ export interface Listing {
   listingId: string;
   tokenId: string;
   listingType: "fixed-price" | "auction";
-  listingStatus: "active" | "sold" | "cancelled";
+  listingStatus: "active" | "sold" | "ended" | "settled" | "cancelled";
   creator: string;
   buyer?: User | { address: string };
   price?: string;
@@ -134,4 +134,41 @@ export interface LogsFromContract {
     transactionHash: Hex;
     transactionIndex: Hex;
   }[];
+}
+
+// Contract return types
+export interface AuctionData {
+  creator: string;
+  tokenId: bigint;
+  highestBidder: string;
+  highestBid: bigint;
+  endTime: bigint;
+  bids: number;
+  extension: bigint;
+  protocolFeeBps: number;
+  state: number; // AuctionState enum
+}
+
+export interface ListingData {
+  creator: string;
+  buyer: string;
+  price: bigint;
+  tokenId: bigint;
+  createdAt: bigint;
+  endTime: bigint;
+  protocolFeeBps: number;
+  state: number; // ListingState enum
+}
+
+export enum AuctionState {
+  Active = 1,
+  Ended = 2,
+  Settled = 3,
+  Cancelled = 4,
+}
+
+export enum ListingState {
+  Active = 1,
+  Purchased = 2,
+  Cancelled = 3,
 }

@@ -406,7 +406,7 @@ export function CreateFlow() {
         />
       )}
       {step === 5 && (
-        <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} listingId={newListingId} />
+        <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} listingId={newListingId!} />
       )}
 
       {/* 2-Step Transaction Modal */}

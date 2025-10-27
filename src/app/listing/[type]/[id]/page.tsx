@@ -24,7 +24,7 @@ export default function ListingPage() {
   
   // Countdown for auction end time
   const countdown = useCountdown(
-    type === "auction" && listing?.endTime ? listing.endTime : null
+    type === "auction" && listing?.auctionEndTime ? listing.auctionEndTime : null
   );
 
   // Helper function to format countdown display
