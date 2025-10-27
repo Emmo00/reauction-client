@@ -82,6 +82,12 @@ export interface Listing {
   }>;
 }
 
+export interface Collectible {
+  tokenId: string;
+  owner: string;
+  cast: CastResponse;
+}
+
 export interface SyncSnapshot {
   listingSyncLock: boolean;
   collectibleSyncLock: boolean;

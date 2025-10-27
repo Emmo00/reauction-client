@@ -79,6 +79,8 @@ export async function getFarcasterCastByHash(castHash: string) {
   try {
     const client = getNeynarClient();
 
+    console.log("Fetching Farcaster cast for hash:", castHash);
+    
     const cast = await client.lookupCastByHashOrUrl({
       identifier: castHash,
       type: "hash",

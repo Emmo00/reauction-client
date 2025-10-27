@@ -4,8 +4,7 @@ import { SyncSnapshotService } from "@/services/syncSnapshot";
 import { getAuctionContractAddress } from "@/lib/constants";
 import { ListingService } from "@/services/listing";
 import { getFarcasterCastByHash, getFarcasterUserByWalletAddress } from "@/lib/neynar";
-import { getContractEvents } from "@/lib/etherscan";
-import { decodeEvent } from "../../../../lib/etherscan";
+import { getContractEvents, decodeEvent } from "@/lib/etherscan";
 
 export async function POST(_: NextRequest) {
   try {
@@ -48,7 +47,7 @@ export async function POST(_: NextRequest) {
     for (const event of newEvents) {
       console.log(`Processing event:`, event);
 
-      const { eventName, args, timeStamp, transactionHash } = event;
+      const { eventName, args, timeStamp } = event;
       const block_timestamp = new Date(parseInt(timeStamp!, 16) * 1000).toISOString();
 
       if (eventName === "AuctionStarted") {
