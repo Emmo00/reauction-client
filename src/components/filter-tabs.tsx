@@ -22,7 +22,7 @@ export function FilterTabs({ onFilterChange }: FilterTabsProps) {
   };
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2">
+    <div className="flex gap-2 overflow-x-auto pb-2 thin-scrollbar">
       {filters.map((filter) => (
         <button
           key={filter.label}

@@ -2,25 +2,31 @@
 
 import { ChevronLeft, MoreVertical, Clock, Zap, ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNav } from "@/components/bottom-nav";
+import { BuyListingDrawer } from "@/components/buy-listing-drawer";
 import { useListing } from "@/queries/listing";
 import { CollectibleImage } from "@/components/collectible-image";
 import { useFarcasterUserByAddress } from "@/queries/users";
 import { User } from "@neynar/nodejs-sdk/build/api";
 import { sdk } from "@farcaster/miniapp-sdk";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { unitsToUSDC } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
 
 export default function ListingPage() {
   const params = useParams();
+  const router = useRouter();
   const type = params.type as "auction" | "fixed-price";
   const id = params.id as string;
   const { data: listing, error, isLoading } = useListing({ id, type });
   const ownerQuery = useFarcasterUserByAddress(listing?.creator || "");
+  
+  // State for buy listing drawer
+  const [isBuyDrawerOpen, setIsBuyDrawerOpen] = useState(false);
   
   // Countdown for auction end time
   const countdown = useCountdown(
@@ -72,6 +78,23 @@ export default function ListingPage() {
     return baseColor;
   };
 
+  // Handle successful purchase
+  const handlePurchaseSuccess = (transactionHash: string) => {
+    console.log("Purchase successful:", transactionHash);
+    // Optionally refresh the listing data or redirect
+    router.push("/home");
+  };
+
+  // Handle opening buy drawer
+  const handleBuyClick = () => {
+    if (type === "fixed-price") {
+      setIsBuyDrawerOpen(true);
+    } else {
+      // Handle auction bid logic here later
+      console.log("Place bid for auction");
+    }
+  };
+
   // Type guard to check if owner data is valid (not error)
   const hasValidOwnerData = (
     data: any
@@ -90,7 +113,7 @@ export default function ListingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-8 max-w-md w-full">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-3xl" />
+          <div className="absolute inset-0 bg-linear-to-br from-red-500/10 to-orange-500/10 rounded-3xl" />
           <div className="relative z-10 text-center space-y-4">
             <div className="h-16 w-16 mx-auto rounded-full bg-red-500/20 flex items-center justify-center">
               <svg
@@ -129,7 +152,7 @@ export default function ListingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-8 max-w-md w-full">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl" />
+          <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 rounded-3xl" />
           <div className="relative z-10 text-center space-y-6">
             <div className="h-16 w-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center">
               <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
@@ -213,6 +236,7 @@ export default function ListingPage() {
           </div>
           <Button
             size="lg"
+            onClick={handleBuyClick}
             className="h-14 w-full rounded-full text-base font-semibold"
             disabled={listing.listingStatus !== "active"}
           >
@@ -411,6 +435,18 @@ export default function ListingPage() {
         </div>
       </div>
       <BottomNav />
+
+      {/* Buy Listing Drawer */}
+      {type === "fixed-price" && listing && (
+        <BuyListingDrawer
+          isOpen={isBuyDrawerOpen}
+          onClose={() => setIsBuyDrawerOpen(false)}
+          listingId={id}
+          price={listing.price || "0"}
+          tokenId={listing.cast?.cast.hash || ""}
+          onSuccess={handlePurchaseSuccess}
+        />
+      )}
     </>
   );
 }

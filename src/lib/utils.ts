@@ -14,6 +14,7 @@ import {
   APP_URL,
   APP_WEBHOOK_URL,
   APP_ACCOUNT_ASSOCIATION,
+  USDC_DECIMALS,
 } from "./constants";
 import { formatUnits } from "viem";
 
@@ -63,5 +64,5 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
 }
 
 export function unitsToUSDC(units: string) {
-  return formatUnits(BigInt(units), 6);
+  return formatUnits(BigInt(units), USDC_DECIMALS());
 }

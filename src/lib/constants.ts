@@ -4,7 +4,7 @@ import { base, baseSepolia } from "viem/chains";
 
 export const isProduction = process.env.NODE_ENV === "production";
 
-export const USDC_DECIMALS = 6;
+export const USDC_DECIMALS = (): number => (isProduction ? 6 : 18);
 
 export const AUCTION_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87aFC933ae";
 export const AUCTION_CONTRACT_ADDRESS_SEPOLIA = "0x803ec9176182B863FD2cD69CF8bC68b1aB1C7b0A";
@@ -13,7 +13,7 @@ export const COLLECTIBLE_CONTRACT_ADDRESS = "0x3aF2Fc5ED9c3da8f669E34Fd6AbA5A87a
 export const COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA = "0x7F8cF2c1FB0A710d71173049816Fd96b4a708d81";
 
 export const USDC_CONTRACT_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-export const USDC_CONTRACT_ADDRESS_SEPOLIA = "0xa3d69B7217B096709170f6fc50535e6aBc084f3A";
+export const USDC_CONTRACT_ADDRESS_SEPOLIA = "0xa3d69b7217b096709170f6fc50535e6abc084f3a";
 
 // Blockchain configuration
 export const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
@@ -30,6 +30,12 @@ export const getAuctionContractAddress = (): string =>
  */
 export const getCollectibleContractAddress = (): string =>
   isProduction ? COLLECTIBLE_CONTRACT_ADDRESS : COLLECTIBLE_CONTRACT_ADDRESS_SEPOLIA;
+
+/**
+ * Get the appropriate USDC contract address based on environment
+ */
+export const getUSDCContractAddress = (): string =>
+  isProduction ? USDC_CONTRACT_ADDRESS : USDC_CONTRACT_ADDRESS_SEPOLIA;
 
 /**
  * Get RPC url based on environment

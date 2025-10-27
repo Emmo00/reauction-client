@@ -12,12 +12,12 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
   const router = useRouter();
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600 p-4">
       <div
-        className="mb-4 aspect-square overflow-hidden cursor-pointer"
+        className="mb-4 aspect-square overflow-hidden cursor-pointer rounded-2xl"
         onClick={() => router.push(`/listing/${listing.listingType}/${listing.listingId}`)}
       >
-        <CollectibleImage size={350} cast={listing.cast} className="h-full w-full object-cover" />
+        <CollectibleImage size={300} cast={listing.cast} className="h-full w-full object-cover" />
       </div>
 
       <div className="flex items-end justify-between px-4 pb-2">
