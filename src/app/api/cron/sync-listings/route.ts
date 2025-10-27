@@ -37,19 +37,19 @@ export async function POST(_: NextRequest) {
       lastSyncedListingsBlockNumber + 1
     );
 
-    const newEvents = decodeEvent("auction", events);
+    console.log("events", events);
+
+    const newEvents = decodeEvent("auction", events.result as any);
 
     console.log("New events fetched:", newEvents);
 
     // go through list of auction events and update listings db accordingly
     // go through list of fixed listing events and update listings db accordingly
     for (const event of newEvents) {
-      const { eventName, args, blockNumber, timeStamp } = event;
+      console.log(`Processing event:`, event);
+
+      const { eventName, args, timeStamp, transactionHash } = event;
       const block_timestamp = new Date(parseInt(timeStamp!, 16) * 1000).toISOString();
-      console.log(
-        `Processing event: ${eventName} at block ${parseInt(blockNumber!, 16)} with args:`,
-        args
-      );
 
       if (eventName === "AuctionStarted") {
         if (await ListingService.auctionExists(args?.auctionId)) continue;
@@ -66,7 +66,7 @@ export async function POST(_: NextRequest) {
           creator: args?.creator!,
           cast,
           auctionStarted: false,
-          auctionEndTime: new Date(args?.endTime! * 1000).toISOString(),
+          auctionEndTime: new Date(Number(args?.endTime!) * 1000).toISOString(),
           listingCreatedAt: block_timestamp!,
         });
       }
@@ -162,7 +162,12 @@ export async function POST(_: NextRequest) {
 
     console.log("Sync snapshot updated.");
 
-    return NextResponse.json({ message: "Listings synced successfully." }, { status: 200 });
+    // Prepare response with tracking information
+    const response: any = {
+      message: "Listings synced successfully.",
+    };
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error("Error syncing listings:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
