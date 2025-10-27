@@ -15,7 +15,7 @@ export class CollectibleService {
     owner: string,
     { limit, page }: { limit: number; page: number }
   ): Promise<Collectible[]> {
-    const offset = page * limit;
+    const offset = (page - 1) * limit;
     return await CollectibleModel.find({ owner }).limit(limit).skip(offset);
   }
 
