@@ -117,3 +117,21 @@ export interface ListingCreatedEvent extends ParsedEvent {
     price: bigint;
   };
 }
+
+export interface LogsFromContract {
+  status: string;
+  message: string;
+  result: {
+    address: Hex;
+    topics: Hex[];
+    data: Hex;
+    blockNumber: Hex;
+    blockHash: Hex;
+    timeStamp: Hex;
+    gasPrice: Hex;
+    gasUsed: Hex;
+    logIndex: Hex;
+    transactionHash: Hex;
+    transactionIndex: Hex;
+  }[];
+}

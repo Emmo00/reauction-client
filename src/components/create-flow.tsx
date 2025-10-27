@@ -21,6 +21,7 @@ import { AlertTriangle, X, Loader2, Check, Shield, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { syncListings } from "@/lib/api/sync";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type ListingType = "auction" | "fixed" | null;
 export type Collection = {
@@ -49,6 +50,10 @@ export function CreateFlow() {
     collectible: null,
     listingType: null,
   });
+  const [newListingId, setNewListingId] = useState<string | null>(null);
+
+  // Query client for invalidating/refetching data
+  const queryClient = useQueryClient();
 
   // Main transaction hook (for listing/auction creation)
   const { writeContract, data: hash, error } = useWriteContract();
@@ -56,7 +61,9 @@ export function CreateFlow() {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     error: confirmationError,
+    data: transactionReceipt,
   } = useWaitForTransactionReceipt({
+    confirmations: 2,
     hash,
   });
 
@@ -216,12 +223,6 @@ export function CreateFlow() {
           return;
       }
 
-      try {
-        await syncListings();
-      } catch (e) {
-        console.error("Error syncing listings:", e);
-      }
-      
       setHasSignedTransaction(true);
     } catch (e) {
       console.error("Error creating listing:", e);
@@ -247,12 +248,66 @@ export function CreateFlow() {
 
   // Handle main transaction confirmation
   useEffect(() => {
-    if (isConfirmed && hasSignedTransaction && !isConfirming && modalStep === 2) {
+    console.log("transaction receipt: ", transactionReceipt);
+    if (
+      isConfirmed &&
+      hasSignedTransaction &&
+      !isConfirming &&
+      modalStep === 2 &&
+      transactionReceipt
+    ) {
       setCurrentError(null); // Clear any errors on success
       setIsModalOpen(false);
+
+      // Extract listing ID from transaction receipt
+      try {
+        // For auction creation, look for AuctionStarted event
+        // For listing creation, look for ListingCreated event
+        const eventName =
+          listingData.listingType === "auction" ? "AuctionStarted" : "ListingCreated";
+
+        // Find the relevant event in the logs
+        const relevantLog = transactionReceipt.logs.find((log) => {
+          try {
+            // For auctions, the first parameter is the auction ID
+            // For listings, the first parameter is the listing ID
+            return log.topics.length > 0; // Basic check for event logs
+          } catch (e) {
+            return false;
+          }
+        });
+
+        if (relevantLog && relevantLog.topics.length > 1) {
+          // The listing/auction ID is typically in the first indexed parameter (topics[1])
+          const idHex = relevantLog.topics[1];
+          const listingId = BigInt(idHex!).toString();
+          setNewListingId(listingId);
+          console.log(`${eventName} ID:`, listingId);
+        } else {
+          console.warn("Could not extract listing ID from transaction receipt");
+        }
+      } catch (e) {
+        console.error("Error extracting listing ID:", e);
+      }
+
+      try {
+        syncListings(queryClient);
+      } catch (e) {
+        console.error("Error syncing listings:", e);
+      }
+
       nextStep();
     }
-  }, [isConfirmed, isConfirming, hasSignedTransaction, modalStep]);
+  }, [
+    isConfirmed,
+    isConfirming,
+    hasSignedTransaction,
+    modalStep,
+    queryClient,
+    hash,
+    transactionReceipt,
+    listingData.listingType,
+  ]);
 
   // Handle transaction and confirmation errors
   useEffect(() => {
@@ -275,9 +330,9 @@ export function CreateFlow() {
       {currentError && (
         <div className="fixed top-4 left-4 right-4 z-50">
           <div className="relative overflow-hidden rounded-2xl bg-red-500/10 backdrop-blur-xl border border-red-500/20 shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5 rounded-2xl" />
+            <div className="absolute inset-0 bg-linear-to-r from-red-500/5 to-orange-500/5 rounded-2xl" />
             <div className="relative z-10 p-4 flex items-start gap-3">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
               </div>
               <div className="flex-1 min-w-0">
@@ -286,7 +341,7 @@ export function CreateFlow() {
               </div>
               <button
                 onClick={clearError}
-                className="flex-shrink-0 p-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                className="shrink-0 p-1 rounded-lg hover:bg-red-500/10 transition-colors"
               >
                 <X className="h-4 w-4 text-red-300" />
               </button>
@@ -351,14 +406,14 @@ export function CreateFlow() {
         />
       )}
       {step === 5 && (
-        <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} />
+        <SuccessScreen listingData={listingData} onReset={resetFlow} transactionHash={hash} listingId={newListingId} />
       )}
 
       {/* 2-Step Transaction Modal */}
       <Dialog open={isModalOpen} onOpenChange={closeModal}>
         <DialogContent className="sm:max-w-md">
           <div className="relative overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
+            <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
 
             <div className="relative z-10 p-6">
               <DialogHeader className="text-center mb-6">

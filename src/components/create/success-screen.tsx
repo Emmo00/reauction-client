@@ -9,13 +9,19 @@ interface SuccessScreenProps {
   listingData: ListingData;
   onReset?: () => void;
   transactionHash?: `0x${string}`;
+  listingId?: string;
 }
 
-export function SuccessScreen({ listingData, onReset, transactionHash }: SuccessScreenProps) {
+export function SuccessScreen({
+  listingData,
+  onReset,
+  transactionHash,
+  listingId,
+}: SuccessScreenProps) {
   const router = useRouter();
 
   const handleViewListing = () => {
-    router.push("/collectible/" + listingData.collectible?.cast?.cast.hash);
+    router.push(`/listing/${listingData.listingType}/${listingId}`);
   };
 
   const handleReturnHome = () => {
