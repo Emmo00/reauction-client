@@ -54,7 +54,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (collectiblesData && "data" in collectiblesData) {
       // Reset collectibles when new data comes in (for profile page, we want to show current page data)
-      setCollectibles(collectiblesData.data.casts || []);
+      setCollectibles(collectiblesData.data.map((collectible) => collectible.cast) || []);
     }
   }, [collectiblesData]);
 

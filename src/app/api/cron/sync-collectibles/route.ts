@@ -49,11 +49,24 @@ export async function POST(_: NextRequest) {
           await CollectibleService.deleteCollectible(tokenId);
         }
 
+        const castHash = BigInt(args.tokenId).toString(16);
+
+        console.log("Cast hash for missing collectible on transfer:", castHash);
+        const cast = (await getFarcasterCastByHash(`0x${castHash}`))!;
+        console.log("cast", cast);
+
+        if (!cast) {
+          console.warn(
+            `Cast not found for tokenId ${args.tokenId} during Transfer event processing. Skipping collectible creation.`
+          );
+          continue;
+        }
+
         // create new collectible entry
         await CollectibleService.createCollectible({
           tokenId,
           owner: to,
-          cast: (await getFarcasterCastByHash(BigInt(tokenId).toString(16)))!,
+          cast,
         });
       }
       if (eventName === "Transfer") {
@@ -68,6 +81,13 @@ export async function POST(_: NextRequest) {
           console.log("Cast hash for missing collectible on transfer:", castHash);
           const cast = (await getFarcasterCastByHash(`0x${castHash}`))!;
           console.log("cast", cast);
+
+          if (!cast) {
+            console.warn(
+              `Cast not found for tokenId ${args.tokenId} during Transfer event processing. Skipping collectible creation.`
+            );
+            continue;
+          }
 
           // create new collectible entry
           await CollectibleService.createCollectible({

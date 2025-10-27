@@ -53,8 +53,6 @@ export interface OwnedCollectiblesError {
   error: string;
 }
 
-export type OwnedCollectiblesResponse = { data: OwnedCollectibles } | OwnedCollectiblesError;
-
 // Cache document interface
 export interface Cache<T = any> {
   key: string;
@@ -87,6 +85,8 @@ export interface Collectible {
   owner: string;
   cast: CastResponse;
 }
+
+export type OwnedCollectiblesResponse = { data: Collectible[] } | OwnedCollectiblesError;
 
 export interface SyncSnapshot {
   listingSyncLock: boolean;
