@@ -16,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 z-50">
-      <div className="glass mx-auto max-w-md rounded-3xl px-6 py-3">
+      <div className="mx-auto max-w-md rounded-3xl px-6 py-3 bg-background">
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon
