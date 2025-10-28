@@ -308,3 +308,7 @@
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(0.55 0.18 285 / 0.7);
 }
+
+/* * {
+  outline: 1px solid red;
+} */

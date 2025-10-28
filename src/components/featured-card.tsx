@@ -12,15 +12,10 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
   const router = useRouter();
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-500 to-red-600 p-4">
-      <div
-        className="mb-4 aspect-square overflow-hidden cursor-pointer rounded-2xl"
-        onClick={() => router.push(`/listing/${listing.listingType}/${listing.listingId}`)}
-      >
-        <CollectibleImage size={300} cast={listing.cast} className="h-full w-full object-cover" />
-      </div>
+    <div className="relative overflow-hidden rounded-3xl bg-linear-to-b from-black to-secondary px-6 pt-6 pb-2">
+      <CollectibleImage size={300} cast={listing.cast} className="mx-auto" borderRadius={30} />
 
-      <div className="flex items-end justify-between px-4 pb-2">
+      <div className="flex items-center gap-2 justify-between pt-2">
         <div>
           <div className="mb-1 flex items-center gap-2 text-white/80">
             {listing.listingType == "auction" && <Zap className="h-4 w-4" />}

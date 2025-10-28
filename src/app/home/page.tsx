@@ -155,7 +155,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 {allListings.map((listing, index) => {
                   try {
                     return (
