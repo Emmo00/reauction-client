@@ -2,15 +2,43 @@
 
 import Link from "next/link";
 import FaultyTerminal from "@/components/FaultyTerminal";
+import MiniAppRequired from "@/components/MiniAppRequired";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 
 export default function LandingPage() {
+  const [isInMiniApp, setIsInMiniApp] = useState<boolean | null>(null);
+  const [showMiniAppRequired, setShowMiniAppRequired] = useState(false);
+
   useEffect(() => {
-    sdk.actions.ready();
+    const checkMiniAppEnvironment = async () => {
+      try {
+        const inMiniApp = await sdk.isInMiniApp();
+        setIsInMiniApp(inMiniApp);
+        if (inMiniApp) {
+          sdk.actions.ready();
+        }
+      } catch (error) {
+        console.log("Not in miniapp environment:", error);
+        setIsInMiniApp(false);
+      }
+    };
+
+    checkMiniAppEnvironment();
   }, []);
+
+  const handleGetStarted = () => {
+    if (isInMiniApp === false) {
+      setShowMiniAppRequired(true);
+    }
+    // If in miniapp, the Link will handle navigation
+  };
+
+  if (showMiniAppRequired) {
+    return <MiniAppRequired />;
+  }
 
   return (
     <>
@@ -54,13 +82,25 @@ export default function LandingPage() {
             NFTs.
           </p>
 
-          <Link href="/home">
-            <Button size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
+          {isInMiniApp ? (
+            <Link href="/home">
+              <Button size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
+                Get Started <ChevronRight className="ml-2 h-4 w-4" />
+                <ChevronRight className="h-4 w-4 -ml-2" />
+                <ChevronRight className="h-4 w-4 -ml-2" />
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              size="lg" 
+              className="h-12 rounded-full px-8 text-base font-semibold"
+              onClick={handleGetStarted}
+            >
               Get Started <ChevronRight className="ml-2 h-4 w-4" />
               <ChevronRight className="h-4 w-4 -ml-2" />
               <ChevronRight className="h-4 w-4 -ml-2" />
             </Button>
-          </Link>
+          )}
         </div>
       </main>
     </>
