@@ -14,6 +14,7 @@ import auctionAbi from "@/abis/auction.json";
 import collectibleAbi from "@/abis/collectible.json";
 import {
   getAuctionContractAddress,
+  getChain,
   getCollectibleContractAddress,
   USDC_DECIMALS,
 } from "@/lib/constants";
@@ -184,7 +185,7 @@ export function CreateFlow() {
     try {
       setCurrentError(null); // Clear any previous errors
 
-      await connectAsync({ connector: farcasterFrame() });
+      await connectAsync({ connector: farcasterFrame(), chainId: getChain().id });
 
       console.log("user address", address, isConnected);
 

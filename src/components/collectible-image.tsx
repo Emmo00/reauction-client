@@ -6,6 +6,7 @@ interface CollectibleImageProps {
   className?: string;
   size?: number; // Width and height in pixels
   borderRadius?: number; // Border radius in pixels
+  onClick?: () => void;
 }
 
 // Type guard to check if embed is a URL embed (not a cast embed)
@@ -16,7 +17,7 @@ function isUrlEmbed(
 }
 
 export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps>(
-  ({ cast, className = "", size = 600, borderRadius = 24 }, ref) => {
+  ({ cast, className = "", size = 600, borderRadius = 24, onClick }, ref) => {
     const castData = cast.cast;
 
     // Extract text content (remove URLs and clean up)
@@ -130,6 +131,7 @@ export const CollectibleImage = forwardRef<HTMLDivElement, CollectibleImageProps
           backgroundColor: backgroundMedia ? "#242424" : getBackgroundColor(),
           fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
+        onClick={() => onClick && onClick()}
       >
         {/* Background media */}
         {backgroundMedia && (

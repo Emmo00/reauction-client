@@ -150,31 +150,57 @@ export default function ListingPage() {
 
   if (isLoading || !listing) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-8 max-w-md w-full">
-          <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 rounded-3xl" />
-          <div className="relative z-10 text-center space-y-6">
-            <div className="h-16 w-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center">
-              <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-background pb-32">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between px-4 py-4">
+          <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+          <div className="h-5 w-40 rounded bg-muted animate-pulse" />
+          <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+        </div>
+
+        <div className="px-4 space-y-4">
+          {/* Image skeleton */}
+          <div className="mx-auto w-[340px] h-[340px] rounded-2xl bg-muted animate-pulse" />
+
+          {/* Price and time cards skeleton */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-card p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-16 rounded bg-muted animate-pulse" />
+              </div>
+              <div className="h-6 w-24 rounded bg-muted animate-pulse" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Loading Listing</h3>
-              <p className="text-sm text-muted-foreground">Fetching listing data...</p>
+            <div className="rounded-2xl bg-card p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-16 rounded bg-muted animate-pulse" />
+              </div>
+              <div className="h-6 w-20 rounded bg-muted animate-pulse" />
             </div>
-            <div className="flex justify-center">
-              <div className="flex space-x-1">
-                <div
-                  className="h-2 w-2 bg-blue-400/60 rounded-full animate-pulse"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <div
-                  className="h-2 w-2 bg-blue-400/60 rounded-full animate-pulse"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <div
-                  className="h-2 w-2 bg-blue-400/60 rounded-full animate-pulse"
-                  style={{ animationDelay: "300ms" }}
-                />
+          </div>
+
+          {/* Button skeleton */}
+          <div className="h-14 w-full rounded-full bg-muted animate-pulse" />
+
+          {/* Tabs skeleton */}
+          <div className="w-full">
+            <div className="grid w-full grid-cols-4 bg-card rounded-lg p-1 gap-1">
+              <div className="h-8 rounded bg-muted animate-pulse" />
+              <div className="h-8 rounded bg-muted animate-pulse" />
+              <div className="h-8 rounded bg-muted animate-pulse" />
+              <div className="h-8 rounded bg-muted animate-pulse" />
+            </div>
+            
+            {/* Tab content skeleton */}
+            <div className="mt-4 rounded-2xl bg-card p-4 space-y-3">
+              <div className="h-5 w-20 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-full rounded bg-muted animate-pulse" />
+              <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+              <div className="space-y-2 pt-2">
+                <div className="h-4 w-full rounded bg-muted animate-pulse" />
+                <div className="h-4 w-full rounded bg-muted animate-pulse" />
+                <div className="h-4 w-2/3 rounded bg-muted animate-pulse" />
               </div>
             </div>
           </div>

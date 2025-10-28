@@ -13,7 +13,13 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-linear-to-b from-black to-secondary px-6 pt-6 pb-2">
-      <CollectibleImage size={300} cast={listing.cast} className="mx-auto" borderRadius={30} />
+      <CollectibleImage
+        size={300}
+        cast={listing.cast}
+        className="mx-auto cursor-pointer"
+        borderRadius={30}
+        onClick={() => router.push(`/listing/${listing.listingType}/${listing.listingId}`)}
+      />
 
       <div className="flex items-center gap-2 justify-between pt-2">
         <div>
