@@ -19,9 +19,9 @@ import {
   useWriteContract,
   useReadContract,
 } from "wagmi";
-import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import auctionAbi from "@/abis/auction.json";
-import { getAuctionContractAddress, getUSDCContractAddress } from "@/lib/constants";
+import { getAuctionContractAddress, getChain, getUSDCContractAddress } from "@/lib/constants";
 import { unitsToUSDC } from "@/lib/utils";
 import { parseUnits, formatUnits } from "viem";
 import { syncListings } from "@/lib/api/sync";
@@ -72,8 +72,8 @@ export function BuyListingDrawer({
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { isConnected, address } = useAccount();
-  const { connectAsync } = useConnect();
+  const { isConnected, address, isConnecting } = useAccount();
+  const { connectAsync, connect, connectors } = useConnect();
   const queryClient = useQueryClient();
 
   // Read USDC balance
@@ -91,8 +91,6 @@ export function BuyListingDrawer({
   // Calculate required amount and check if user has sufficient balance
   const hasInsufficientFunds = usdcBalance !== undefined && BigInt(usdcBalance) < BigInt(price);
   const formattedBalance = usdcBalance ? unitsToUSDC(BigInt(usdcBalance).toString()) : "0";
-
-  console.log("usdc balance", usdcBalance);
 
   // Error message helper
   const getErrorMessage = (error: any): string => {
@@ -205,9 +203,10 @@ export function BuyListingDrawer({
     try {
       setError(null);
 
-      if (!isConnected) {
-        await connectAsync({ connector: farcasterFrame() });
-      }
+      await connectAsync({ connector: farcasterMiniApp() });
+      console.log("STILL NOT CONNECTED??", isConnected);
+
+      console.log("Connected address:", isConnected, address, isConnecting);
 
       // Check for insufficient funds
       if (hasInsufficientFunds) {
@@ -227,7 +226,12 @@ export function BuyListingDrawer({
         abi: ERC20_ABI,
         functionName: "approve",
         args: [auctionAddress as `0x${string}`, BigInt(price)],
+        chain: getChain(),
+        account: address,
+        chainId: getChain().id,
       });
+
+      console.log("Approval transaction sent");
     } catch (e) {
       console.error("Error approving USDC:", e);
       setError(getErrorMessage(e));
@@ -257,7 +261,7 @@ export function BuyListingDrawer({
           <DrawerTitle className="text-xl font-semibold text-foreground">
             {currentStep === 3 ? "Purchase Successful!" : "Complete Purchase"}
           </DrawerTitle>
-          <DrawerDescription className="text-muted-foreground">
+          <DrawerDescription className="text-muted-foreground hidden">
             {currentStep === 3
               ? "Your collectible purchase has been completed"
               : `Purchase collectible for ${unitsToUSDC(price)} USDC`}
@@ -273,7 +277,7 @@ export function BuyListingDrawer({
                 getStepStatus(1) === "completed"
                   ? "bg-green-500/10 border-green-500/20"
                   : getStepStatus(1) === "active"
-                  ? "bg-blue-500/10 border-blue-500/20"
+                  ? "bg-primary/40 border-primary/50"
                   : "bg-card border-white/10"
               }`}
             >
@@ -283,7 +287,7 @@ export function BuyListingDrawer({
                     getStepStatus(1) === "completed"
                       ? "bg-green-500/20 border-green-500"
                       : getStepStatus(1) === "active"
-                      ? "bg-blue-500/20 border-blue-500"
+                      ? "bg-primary/50 border-primary"
                       : "bg-muted border-muted-foreground"
                   }`}
                 >
@@ -311,7 +315,7 @@ export function BuyListingDrawer({
                 getStepStatus(2) === "completed"
                   ? "bg-green-500/10 border-green-500/20"
                   : getStepStatus(2) === "active"
-                  ? "bg-blue-500/10 border-blue-500/20"
+                  ? "bg-primary/50 border-primary/50"
                   : "bg-card border-white/10"
               }`}
             >
@@ -321,7 +325,7 @@ export function BuyListingDrawer({
                     getStepStatus(2) === "completed"
                       ? "bg-green-500/20 border-green-500"
                       : getStepStatus(2) === "active"
-                      ? "bg-blue-500/20 border-blue-500"
+                      ? "bg-primary/50 border-primary"
                       : "bg-muted border-muted-foreground"
                   }`}
                 >
@@ -412,7 +416,7 @@ export function BuyListingDrawer({
             <div className="space-y-2">
               <Button
                 onClick={handleApproveUSDC}
-                disabled={isLoading || hasInsufficientFunds || isBalanceLoading}
+                disabled={isLoading || hasInsufficientFunds || isBalanceLoading || isConnecting}
                 className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
               >
                 {isApprovalPending || isApprovalConfirming ? (
