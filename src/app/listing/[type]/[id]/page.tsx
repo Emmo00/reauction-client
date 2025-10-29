@@ -2,7 +2,7 @@
 
 import { ChevronLeft, MoreVertical, Clock, Zap, ArrowUpRightIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,9 @@ export default function ListingPage() {
   
   // State for buy listing drawer
   const [isBuyDrawerOpen, setIsBuyDrawerOpen] = useState(false);
+  
+  // Ref for tabs content to enable scrolling
+  const tabsRef = useRef<HTMLDivElement>(null);
   
   // Countdown for auction end time
   const countdown = useCountdown(
@@ -83,6 +86,19 @@ export default function ListingPage() {
     console.log("Purchase successful:", transactionHash);
     // Optionally refresh the listing data or redirect
     router.push("/home");
+  };
+
+  // Handle tab change with scroll into view
+  const handleTabChange = (value: string) => {
+    // Small delay to ensure the content has rendered
+    setTimeout(() => {
+      if (tabsRef.current) {
+        tabsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
   };
 
   // Handle opening buy drawer
@@ -260,19 +276,48 @@ export default function ListingPage() {
               </p>
             </div>
           </div>
-          <Button
-            size="lg"
-            onClick={handleBuyClick}
-            className="h-14 w-full rounded-full text-base font-semibold"
-            disabled={listing.listingStatus !== "active"}
-          >
-            {type === "auction" ? "Place Bid" : "Buy Now"}
-            <span className="ml-2">→</span>
-          </Button>
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-card">
+          {/* Status banner for sold/cancelled listings */}
+          {listing.listingStatus === "sold" && (
+            <div className="rounded-2xl bg-green-500/10 border border-green-500/20 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                <span className="text-green-400 font-semibold">SOLD</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This collectible has been purchased
+              </p>
+            </div>
+          )}
+          
+          {listing.listingStatus === "cancelled" && (
+            <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <span className="text-red-400 font-semibold">CANCELLED</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This listing has been cancelled by the seller
+              </p>
+            </div>
+          )}
+
+          {listing.listingStatus === "active" && (
+            <Button
+              size="lg"
+              onClick={handleBuyClick}
+              className="h-14 w-full rounded-full text-base font-semibold"
+            >
+              {type === "auction" ? "Place Bid" : "Buy Now"}
+              <span className="ml-2">→</span>
+            </Button>
+          )}
+          <Tabs defaultValue="details" className="w-full" onValueChange={handleTabChange} ref={tabsRef}>
+            <TabsList className={`grid w-full ${type === "fixed-price" ? "grid-cols-3" : "grid-cols-4"} bg-card`}>
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="bids">Bids</TabsTrigger>
+              {type === "auction" && <TabsTrigger value="bids">Bids</TabsTrigger>}
+              {type === "fixed-price" && listing.listingStatus === "sold" && (
+                <TabsTrigger value="buyer">Buyer</TabsTrigger>
+              )}
               <TabsTrigger value="owner">Seller</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-4">
@@ -414,9 +459,9 @@ export default function ListingPage() {
                 )}
               </div>
             </TabsContent>
-            <TabsContent value="bids" className="mt-4">
-              <div className="rounded-2xl bg-card p-4">
-                {type === "auction" ? (
+            {type === "auction" && (
+              <TabsContent value="bids" className="mt-4">
+                <div className="rounded-2xl bg-card p-4">
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Bid History</h3>
                     {listing.bids && listing.bids.length > 0 ? (
@@ -450,13 +495,124 @@ export default function ListingPage() {
                       <p className="text-sm text-muted-foreground">No bids yet.</p>
                     )}
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    This is a fixed-price listing. No bid history available.
-                  </p>
-                )}
-              </div>
-            </TabsContent>
+                </div>
+              </TabsContent>
+            )}
+            {type === "fixed-price" && listing.listingStatus === "sold" && (
+              <TabsContent value="buyer" className="mt-4">
+                <div className="rounded-2xl bg-card p-4">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground">Buyer Information</h3>
+                    {listing.buyer ? (
+                      <>
+                        {"fid" in listing.buyer ? (
+                          // Buyer is a Farcaster user
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-16 w-16">
+                                <AvatarImage src={listing.buyer.pfp_url} alt="Buyer avatar" />
+                                <AvatarFallback>
+                                  {listing.buyer.display_name?.substring(0, 2).toUpperCase() || 
+                                   listing.buyer.username?.substring(0, 2).toUpperCase() || "??"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-foreground">
+                                  {listing.buyer.display_name || listing.buyer.username}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  @{listing.buyer.username}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  FID: {listing.buyer.fid}
+                                </p>
+                              </div>
+                            </div>
+                            {listing.buyer.profile?.bio?.text && (
+                              <div>
+                                <h5 className="text-sm font-medium text-foreground mb-1">Bio</h5>
+                                <p className="text-sm text-muted-foreground">
+                                  {listing.buyer.profile.bio.text}
+                                </p>
+                              </div>
+                            )}
+                            <div className="flex gap-4 text-sm">
+                              <span className="text-muted-foreground">
+                                <span className="font-medium text-foreground">
+                                  {listing.buyer.follower_count}
+                                </span>{" "}
+                                followers
+                              </span>
+                              <span className="text-muted-foreground">
+                                <span className="font-medium text-foreground">
+                                  {listing.buyer.following_count}
+                                </span>{" "}
+                                following
+                              </span>
+                            </div>
+                            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                              <p className="text-xs text-green-400 mb-1">Purchase Price</p>
+                              <p className="text-sm font-semibold text-green-400">
+                                {unitsToUSDC(listing.price || "0")} USDC
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                if ("fid" in listing.buyer!) {
+                                  sdk.actions.viewProfile({
+                                    fid: listing.buyer.fid,
+                                  });
+                                }
+                              }}
+                              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                              View on Farcaster
+                            </button>
+                          </div>
+                        ) : (
+                          // Buyer is just an address
+                          <div className="space-y-4">
+                            <div className="text-center">
+                              <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-3">
+                                <span className="text-lg font-mono">
+                                  {listing.buyer.address.substring(2, 4).toUpperCase()}
+                                </span>
+                              </div>
+                              <h4 className="font-semibold text-foreground mb-1">Wallet Buyer</h4>
+                              <p className="text-sm text-muted-foreground">Not found on Farcaster</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-lg p-3">
+                              <p className="text-xs text-muted-foreground mb-1">Ethereum Address</p>
+                              <p className="text-sm font-mono text-foreground break-all">
+                                {listing.buyer.address}
+                              </p>
+                            </div>
+                            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                              <p className="text-xs text-green-400 mb-1">Purchase Price</p>
+                              <p className="text-sm font-semibold text-green-400">
+                                {unitsToUSDC(listing.price || "0")} USDC
+                              </p>
+                            </div>
+                            <a
+                              href={`https://etherscan.io/address/${listing.buyer.address}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors text-center block"
+                            >
+                              View on Etherscan
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Buyer information not available.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>

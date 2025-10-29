@@ -195,13 +195,29 @@
 
 /* Custom Scrollbars with Glassmorphism Design */
 /* Webkit browsers (Chrome, Safari, Edge) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.45 0.15 285 / 0.6) transparent;
+}
+
+/* Force overlay scrollbars globally */
+html {
+  overflow: overlay;
+}
+
+/* Webkit scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+  background: transparent;
+}
+
+::-webkit-scrollbar:hover {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  background: oklch(0.1 0.02 30 / 0.3);
+  background: transparent;
   border-radius: 8px;
   backdrop-filter: blur(8px);
 }
@@ -237,24 +253,30 @@
 }
 
 ::-webkit-scrollbar-corner {
-  background: oklch(0.1 0.02 30 / 0.3);
+  background: transparent;
   backdrop-filter: blur(8px);
 }
 
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: oklch(0.45 0.15 285 / 0.6) oklch(0.1 0.02 30 / 0.3);
+/* Firefox - force overlay scrollbars */
+@supports (overflow: overlay) {
+  html {
+    overflow: overlay;
+  }
 }
 
 /* Custom scrollbar for specific containers with enhanced styling */
+.custom-scrollbar {
+  overflow: overlay;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
   height: 10px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: oklch(0.14 0.02 30 / 0.4);
+  background: transparent;
   border-radius: 12px;
   margin: 4px;
   border: 1px solid oklch(0.22 0.02 30 / 0.3);
@@ -289,13 +311,18 @@
 }
 
 /* Thin scrollbar variant for compact spaces */
+.thin-scrollbar {
+  overflow: overlay;
+}
+
 .thin-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+  background: transparent;
 }
 
 .thin-scrollbar::-webkit-scrollbar-track {
-  background: oklch(0.1 0.02 30 / 0.2);
+  background: transparent;
   border-radius: 6px;
 }
 

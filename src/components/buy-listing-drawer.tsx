@@ -67,14 +67,6 @@ export function BuyListingDrawer({
   tokenId,
   onSuccess,
 }: BuyListingDrawerProps) {
-  // Debug logging
-  console.log("BuyListingDrawer rendered with props:", {
-    isOpen,
-    listingId,
-    price,
-    tokenId,
-  });
-
   const [currentStep, setCurrentStep] = useState<TransactionStep>(1);
   const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
@@ -114,24 +106,6 @@ export function BuyListingDrawer({
     return "An unexpected error occurred. Please try again.";
   };
 
-  const handleBuyListing = () => {
-    try {
-      setError(null);
-
-      const auctionAddress = getAuctionContractAddress();
-
-      writeBuy({
-        address: auctionAddress as `0x${string}`,
-        abi: auctionAbi,
-        functionName: "buyListing",
-        args: [BigInt(listingId)],
-      });
-    } catch (e) {
-      console.error("Error buying listing:", e);
-      setError(getErrorMessage(e));
-    }
-  };
-
   // USDC Approval transaction
   const {
     writeContract: writeApproval,
@@ -145,6 +119,7 @@ export function BuyListingDrawer({
     isSuccess: isApprovalConfirmed,
     error: approvalConfirmationError,
   } = useWaitForTransactionReceipt({
+    confirmations: 2,
     hash: approvalHash,
   });
 
@@ -173,13 +148,6 @@ export function BuyListingDrawer({
       setCurrentStep(2);
     }
   }, [isApprovalConfirmed, approvalHash]);
-
-  // Automatically proceed to buy after approval step changes to 2
-  useEffect(() => {
-    if (currentStep === 2 && approvalTxHash) {
-      handleBuyListing();
-    }
-  }, [currentStep, approvalTxHash]);
 
   // Handle buy confirmation
   useEffect(() => {
@@ -212,11 +180,9 @@ export function BuyListingDrawer({
       setError(null);
       console.log("Starting approval process...");
 
-      // await connectAsync({ connector: farcasterMiniApp() });
-      console.log("Connection status:", { isConnected, address, isConnecting });
+      await connectAsync({ connector: farcasterMiniApp() });
 
-      // Wait a bit for connection state to update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      console.log("Connection status:", { isConnected, address, isConnecting });
 
       // Check for insufficient funds
       if (hasInsufficientFunds) {
@@ -257,6 +223,33 @@ export function BuyListingDrawer({
       console.log("Approval transaction sent successfully");
     } catch (e) {
       console.error("Error in handleApproveUSDC:", e);
+      setError(getErrorMessage(e));
+    }
+  };
+
+  const handleBuyListing = async() => {
+    try {
+      setError(null);
+
+      const auctionAddress = getAuctionContractAddress();
+
+      await connectAsync({ connector: farcasterMiniApp() });
+
+      console.log("Buying listing with params:", {
+        address: auctionAddress as `0x${string}`,
+        abi: auctionAbi,
+        functionName: "buyListing",
+        args: [BigInt(listingId)],
+      });
+
+      writeBuy({
+        address: auctionAddress as `0x${string}`,
+        abi: auctionAbi,
+        functionName: "buyListing",
+        args: [BigInt(listingId)],
+      });
+    } catch (e) {
+      console.error("Error buying listing:", e);
       setError(getErrorMessage(e));
     }
   };
@@ -423,7 +416,14 @@ export function BuyListingDrawer({
             {error && (
               <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 mb-4">
                 <div className="flex items-center gap-2">
-                  <X className="h-5 w-5 text-red-400 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    aria-label="Dismiss error"
+                    className="p-1 rounded-full hover:bg-red-500/10 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  >
+                    <X className="h-5 w-5 text-red-400 shrink-0" />
+                  </button>
                   <p className="text-sm text-red-400">{error}</p>
                 </div>
               </div>
@@ -485,8 +485,9 @@ export function BuyListingDrawer({
             {currentStep === 2 && (
               <div className="space-y-2">
                 <Button
-                  disabled
-                  className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
+                  onClick={handleBuyListing}
+                  disabled={isBuyPending || isBuyConfirming}
+                  className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
                 >
                   {isBuyPending || isBuyConfirming ? (
                     <div className="flex items-center gap-2">
@@ -494,12 +495,14 @@ export function BuyListingDrawer({
                       <span>{isBuyPending ? "Purchasing..." : "Confirming Purchase..."}</span>
                     </div>
                   ) : (
-                    "Processing Purchase..."
+                    "Confirm Buy"
                   )}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Please wait while the purchase is being processed
-                </p>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="w-full h-12 rounded-full">
+                    Cancel
+                  </Button>
+                </DrawerClose>
               </div>
             )}
 
