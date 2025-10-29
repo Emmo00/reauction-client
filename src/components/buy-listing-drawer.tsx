@@ -65,9 +65,8 @@ export function BuyListingDrawer({
   listingId,
   price,
   tokenId,
-  onSuccess,
 }: BuyListingDrawerProps) {
-  const [currentStep, setCurrentStep] = useState<TransactionStep>(1);
+  const [currentStep, setCurrentStep] = useState<TransactionStep>(3);
   const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -161,10 +160,8 @@ export function BuyListingDrawer({
       } catch (e) {
         console.error("Error syncing listings:", e);
       }
-
-      onSuccess?.(buyHash);
     }
-  }, [isBuyConfirmed, buyHash, onSuccess, queryClient]);
+  }, [isBuyConfirmed, buyHash, queryClient]);
 
   // Handle errors
   useEffect(() => {
@@ -227,7 +224,7 @@ export function BuyListingDrawer({
     }
   };
 
-  const handleBuyListing = async() => {
+  const handleBuyListing = async () => {
     try {
       setError(null);
 
@@ -305,82 +302,84 @@ export function BuyListingDrawer({
 
           <div className="px-6 pb-6">
             {/* Transaction Steps */}
-            <div className="space-y-4 mb-6">
-              {/* Step 1: Approve USDC */}
-              <div
-                className={`rounded-2xl p-4 border transition-all ${
-                  getStepStatus(1) === "completed"
-                    ? "bg-green-500/10 border-green-500/20"
-                    : getStepStatus(1) === "active"
-                    ? "bg-primary/40 border-primary/50"
-                    : "bg-card border-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                      getStepStatus(1) === "completed"
-                        ? "bg-green-500/20 border-green-500"
-                        : getStepStatus(1) === "active"
-                        ? "bg-primary/50 border-primary"
-                        : "bg-muted border-muted-foreground"
-                    }`}
-                  >
-                    {getStepStatus(1) === "completed" ? (
-                      <Check className="h-4 w-4 text-green-400" />
-                    ) : getStepStatus(1) === "active" &&
-                      (isApprovalPending || isApprovalConfirming) ? (
-                      <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-                    ) : (
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">Approve USDC</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Allow contract to spend {unitsToUSDC(price)} USDC
-                    </p>
+            {currentStep < 3 && (
+              <div className="space-y-4 mb-6">
+                {/* Step 1: Approve USDC */}
+                <div
+                  className={`rounded-2xl p-4 border transition-all ${
+                    getStepStatus(1) === "completed"
+                      ? "bg-green-500/10 border-green-500/20"
+                      : getStepStatus(1) === "active"
+                      ? "bg-primary/40 border-primary/50"
+                      : "bg-card border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+                        getStepStatus(1) === "completed"
+                          ? "bg-green-500/20 border-green-500"
+                          : getStepStatus(1) === "active"
+                          ? "bg-primary/50 border-primary"
+                          : "bg-muted border-muted-foreground"
+                      }`}
+                    >
+                      {getStepStatus(1) === "completed" ? (
+                        <Check className="h-4 w-4 text-green-400" />
+                      ) : getStepStatus(1) === "active" &&
+                        (isApprovalPending || isApprovalConfirming) ? (
+                        <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                      ) : (
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-foreground">Approve USDC</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Allow contract to spend {unitsToUSDC(price)} USDC
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Step 2: Buy Listing */}
-              <div
-                className={`rounded-2xl p-4 border transition-all ${
-                  getStepStatus(2) === "completed"
-                    ? "bg-green-500/10 border-green-500/20"
-                    : getStepStatus(2) === "active"
-                    ? "bg-primary/50 border-primary/50"
-                    : "bg-card border-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                      getStepStatus(2) === "completed"
-                        ? "bg-green-500/20 border-green-500"
-                        : getStepStatus(2) === "active"
-                        ? "bg-primary/50 border-primary"
-                        : "bg-muted border-muted-foreground"
-                    }`}
-                  >
-                    {getStepStatus(2) === "completed" ? (
-                      <Check className="h-4 w-4 text-green-400" />
-                    ) : getStepStatus(2) === "active" && (isBuyPending || isBuyConfirming) ? (
-                      <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-                    ) : (
-                      <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">Complete Purchase</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Transfer collectible to your wallet
-                    </p>
+                {/* Step 2: Buy Listing */}
+                <div
+                  className={`rounded-2xl p-4 border transition-all ${
+                    getStepStatus(2) === "completed"
+                      ? "bg-green-500/10 border-green-500/20"
+                      : getStepStatus(2) === "active"
+                      ? "bg-primary/50 border-primary/50"
+                      : "bg-card border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+                        getStepStatus(2) === "completed"
+                          ? "bg-green-500/20 border-green-500"
+                          : getStepStatus(2) === "active"
+                          ? "bg-primary/50 border-primary"
+                          : "bg-muted border-muted-foreground"
+                      }`}
+                    >
+                      {getStepStatus(2) === "completed" ? (
+                        <Check className="h-4 w-4 text-green-400" />
+                      ) : getStepStatus(2) === "active" && (isBuyPending || isBuyConfirming) ? (
+                        <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                      ) : (
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-foreground">Complete Purchase</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Transfer collectible to your wallet
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Balance Display */}
             {currentStep < 3 && address && (

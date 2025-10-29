@@ -81,13 +81,6 @@ export default function ListingPage() {
     return baseColor;
   };
 
-  // Handle successful purchase
-  const handlePurchaseSuccess = (transactionHash: string) => {
-    console.log("Purchase successful:", transactionHash);
-    // Optionally refresh the listing data or redirect
-    router.push("/home");
-  };
-
   // Handle tab change with scroll into view
   const handleTabChange = (value: string) => {
     // Small delay to ensure the content has rendered
@@ -621,12 +614,11 @@ export default function ListingPage() {
       {/* Buy Listing Drawer */}
       {type === "fixed-price" && listing && (
         <BuyListingDrawer
-          isOpen={isBuyDrawerOpen}
+          isOpen={true || isBuyDrawerOpen}
           onClose={() => setIsBuyDrawerOpen(false)}
           listingId={id}
           price={listing.price || "0"}
           tokenId={listing.cast?.cast.hash || ""}
-          onSuccess={handlePurchaseSuccess}
         />
       )}
     </>
