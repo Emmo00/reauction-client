@@ -216,7 +216,7 @@ export function BuyListingDrawer({
       console.log("Connection status:", { isConnected, address, isConnecting });
 
       // Wait a bit for connection state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Check for insufficient funds
       if (hasInsufficientFunds) {
@@ -310,210 +310,212 @@ export function BuyListingDrawer({
             </DrawerDescription>
           </DrawerHeader>
 
-        <div className="px-6 pb-6">
-          {/* Transaction Steps */}
-          <div className="space-y-4 mb-6">
-            {/* Step 1: Approve USDC */}
-            <div
-              className={`rounded-2xl p-4 border transition-all ${
-                getStepStatus(1) === "completed"
-                  ? "bg-green-500/10 border-green-500/20"
-                  : getStepStatus(1) === "active"
-                  ? "bg-primary/40 border-primary/50"
-                  : "bg-card border-white/10"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                    getStepStatus(1) === "completed"
-                      ? "bg-green-500/20 border-green-500"
-                      : getStepStatus(1) === "active"
-                      ? "bg-primary/50 border-primary"
-                      : "bg-muted border-muted-foreground"
-                  }`}
-                >
-                  {getStepStatus(1) === "completed" ? (
-                    <Check className="h-4 w-4 text-green-400" />
-                  ) : getStepStatus(1) === "active" &&
-                    (isApprovalPending || isApprovalConfirming) ? (
-                    <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-                  ) : (
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  )}
+          <div className="px-6 pb-6">
+            {/* Transaction Steps */}
+            <div className="space-y-4 mb-6">
+              {/* Step 1: Approve USDC */}
+              <div
+                className={`rounded-2xl p-4 border transition-all ${
+                  getStepStatus(1) === "completed"
+                    ? "bg-green-500/10 border-green-500/20"
+                    : getStepStatus(1) === "active"
+                    ? "bg-primary/40 border-primary/50"
+                    : "bg-card border-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+                      getStepStatus(1) === "completed"
+                        ? "bg-green-500/20 border-green-500"
+                        : getStepStatus(1) === "active"
+                        ? "bg-primary/50 border-primary"
+                        : "bg-muted border-muted-foreground"
+                    }`}
+                  >
+                    {getStepStatus(1) === "completed" ? (
+                      <Check className="h-4 w-4 text-green-400" />
+                    ) : getStepStatus(1) === "active" &&
+                      (isApprovalPending || isApprovalConfirming) ? (
+                      <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                    ) : (
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-foreground">Approve USDC</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Allow contract to spend {unitsToUSDC(price)} USDC
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground">Approve USDC</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Allow contract to spend {unitsToUSDC(price)} USDC
-                  </p>
+              </div>
+
+              {/* Step 2: Buy Listing */}
+              <div
+                className={`rounded-2xl p-4 border transition-all ${
+                  getStepStatus(2) === "completed"
+                    ? "bg-green-500/10 border-green-500/20"
+                    : getStepStatus(2) === "active"
+                    ? "bg-primary/50 border-primary/50"
+                    : "bg-card border-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+                      getStepStatus(2) === "completed"
+                        ? "bg-green-500/20 border-green-500"
+                        : getStepStatus(2) === "active"
+                        ? "bg-primary/50 border-primary"
+                        : "bg-muted border-muted-foreground"
+                    }`}
+                  >
+                    {getStepStatus(2) === "completed" ? (
+                      <Check className="h-4 w-4 text-green-400" />
+                    ) : getStepStatus(2) === "active" && (isBuyPending || isBuyConfirming) ? (
+                      <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-foreground">Complete Purchase</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Transfer collectible to your wallet
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Buy Listing */}
-            <div
-              className={`rounded-2xl p-4 border transition-all ${
-                getStepStatus(2) === "completed"
-                  ? "bg-green-500/10 border-green-500/20"
-                  : getStepStatus(2) === "active"
-                  ? "bg-primary/50 border-primary/50"
-                  : "bg-card border-white/10"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                    getStepStatus(2) === "completed"
-                      ? "bg-green-500/20 border-green-500"
-                      : getStepStatus(2) === "active"
-                      ? "bg-primary/50 border-primary"
-                      : "bg-muted border-muted-foreground"
-                  }`}
-                >
-                  {getStepStatus(2) === "completed" ? (
-                    <Check className="h-4 w-4 text-green-400" />
-                  ) : getStepStatus(2) === "active" && (isBuyPending || isBuyConfirming) ? (
-                    <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground">Complete Purchase</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Transfer collectible to your wallet
-                  </p>
+            {/* Balance Display */}
+            {currentStep < 3 && address && (
+              <div className="rounded-2xl bg-card border border-white/10 p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Your USDC Balance</span>
+                  </div>
+                  <div className="text-right">
+                    {isBalanceLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <div className="space-y-1">
+                        <p
+                          className={`text-sm font-semibold ${
+                            hasInsufficientFunds ? "text-red-400" : "text-foreground"
+                          }`}
+                        >
+                          {formattedBalance} USDC
+                        </p>
+                        {hasInsufficientFunds && (
+                          <p className="text-xs text-red-400">Need {unitsToUSDC(price)} USDC</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Error Display */}
+            {error && (
+              <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <X className="h-5 w-5 text-red-400 shrink-0" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {currentStep === 3 && (
+              <div className="text-center space-y-4">
+                <div className="h-16 w-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Check className="h-8 w-8 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Collectible Purchased!
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    The collectible has been transferred to your wallet.
+                  </p>
+                </div>
+                {buyTxHash && (
+                  <div className="bg-card rounded-2xl p-4">
+                    <p className="text-sm text-muted-foreground mb-2">Transaction Hash:</p>
+                    <p className="text-xs font-mono text-foreground break-all">{buyTxHash}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Balance Display */}
-          {currentStep < 3 && address && (
-            <div className="rounded-2xl bg-card border border-white/10 p-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">Your USDC Balance</span>
-                </div>
-                <div className="text-right">
-                  {isBalanceLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  ) : (
-                    <div className="space-y-1">
-                      <p
-                        className={`text-sm font-semibold ${
-                          hasInsufficientFunds ? "text-red-400" : "text-foreground"
-                        }`}
-                      >
-                        {formattedBalance} USDC
-                      </p>
-                      {hasInsufficientFunds && (
-                        <p className="text-xs text-red-400">Need {unitsToUSDC(price)} USDC</p>
-                      )}
+          <DrawerFooter>
+            {currentStep === 1 && (
+              <div className="space-y-2">
+                <Button
+                  onClick={handleApproveUSDC}
+                  disabled={isLoading || hasInsufficientFunds || isBalanceLoading || isConnecting}
+                  className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+                >
+                  {isApprovalPending || isApprovalConfirming ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>
+                        {isApprovalPending ? "Approve USDC..." : "Confirming Approval..."}
+                      </span>
                     </div>
+                  ) : hasInsufficientFunds ? (
+                    "Insufficient USDC Balance"
+                  ) : (
+                    `Approve ${unitsToUSDC(price)} USDC`
                   )}
-                </div>
+                </Button>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="w-full h-12 rounded-full">
+                    Cancel
+                  </Button>
+                </DrawerClose>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Error Display */}
-          {error && (
-            <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 mb-4">
-              <div className="flex items-center gap-2">
-                <X className="h-5 w-5 text-red-400 shrink-0" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {currentStep === 3 && (
-            <div className="text-center space-y-4">
-              <div className="h-16 w-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="h-8 w-8 text-green-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Collectible Purchased!
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  The collectible has been transferred to your wallet.
+            {currentStep === 2 && (
+              <div className="space-y-2">
+                <Button
+                  disabled
+                  className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
+                >
+                  {isBuyPending || isBuyConfirming ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{isBuyPending ? "Purchasing..." : "Confirming Purchase..."}</span>
+                    </div>
+                  ) : (
+                    "Processing Purchase..."
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Please wait while the purchase is being processed
                 </p>
               </div>
-              {buyTxHash && (
-                <div className="bg-card rounded-2xl p-4">
-                  <p className="text-sm text-muted-foreground mb-2">Transaction Hash:</p>
-                  <p className="text-xs font-mono text-foreground break-all">{buyTxHash}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
 
-        <DrawerFooter>
-          {currentStep === 1 && (
-            <div className="space-y-2">
-              <Button
-                onClick={handleApproveUSDC}
-                disabled={isLoading || hasInsufficientFunds || isBalanceLoading || isConnecting}
-                className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-50"
-              >
-                {isApprovalPending || isApprovalConfirming ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{isApprovalPending ? "Approve USDC..." : "Confirming Approval..."}</span>
-                  </div>
-                ) : hasInsufficientFunds ? (
-                  "Insufficient USDC Balance"
-                ) : (
-                  `Approve ${unitsToUSDC(price)} USDC`
-                )}
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="outline" className="w-full h-12 rounded-full">
-                  Cancel
+            {currentStep === 3 && (
+              <div className="space-y-2">
+                <Button
+                  onClick={handleClose}
+                  className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
+                >
+                  Done
                 </Button>
-              </DrawerClose>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-2">
-              <Button
-                disabled
-                className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
-              >
-                {isBuyPending || isBuyConfirming ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{isBuyPending ? "Purchasing..." : "Confirming Purchase..."}</span>
-                  </div>
-                ) : (
-                  "Processing Purchase..."
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Please wait while the purchase is being processed
-              </p>
-            </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-2">
-              <Button
-                onClick={handleClose}
-                className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
-              >
-                Done
-              </Button>
-            </div>
-          )}
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+              </div>
+            )}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     );
   } catch (error) {
     console.error("Error rendering BuyListingDrawer:", error);
@@ -521,9 +523,7 @@ export function BuyListingDrawer({
       <Drawer open={isOpen} onOpenChange={handleClose}>
         <DrawerContent className="bg-background border-white/10">
           <DrawerHeader className="text-center">
-            <DrawerTitle className="text-xl font-semibold text-foreground">
-              Error
-            </DrawerTitle>
+            <DrawerTitle className="text-xl font-semibold text-foreground">Error</DrawerTitle>
           </DrawerHeader>
           <div className="px-6 pb-6">
             <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4">
