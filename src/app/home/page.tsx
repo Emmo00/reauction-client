@@ -11,11 +11,15 @@ import { ErrorState } from "@/components/error-state";
 import { useInfiniteListings } from "@/queries/listing";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useConnect } from "wagmi";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import type { Listing } from "@/types";
 
 export default function HomePage() {
   const [listingType, setListingType] = useState<"auction" | "fixed-price" | undefined>(undefined);
-  
+
+  const { connect } = useConnect();
+
   const {
     data,
     error,
@@ -24,7 +28,7 @@ export default function HomePage() {
     hasNextPage,
     fetchNextPage,
     refetch,
-    isRefetching
+    isRefetching,
   } = useInfiniteListings({
     limit: 10,
     listingType,
@@ -37,7 +41,7 @@ export default function HomePage() {
   }, [hasNextPage, isFetchingNextPage, isRefetching, fetchNextPage]);
 
   const { observerRef, setNotFetching } = useInfiniteScroll(loadMore, {
-    enabled: hasNextPage && !isLoading && !error
+    enabled: hasNextPage && !isLoading && !error,
   });
 
   // Reset scroll detection when new data is loaded
@@ -47,19 +51,29 @@ export default function HomePage() {
     }
   }, [isFetchingNextPage, setNotFetching]);
 
+  useEffect(() => {
+    connect({ connector: farcasterMiniApp() });
+  }, [connect]);
+
   // Flatten all pages into a single array of listings
-  const allListings: Listing[] = data?.pages.flatMap(page => page.listings) || [];
+  const allListings: Listing[] = data?.pages.flatMap((page) => page.listings) || [];
 
   // Handle filter change - reset to first page with debounce
-  const debouncedFilterChange = useDebounce((newListingType: "auction" | "fixed-price" | undefined) => {
-    if (newListingType !== listingType) {
-      setListingType(newListingType);
-    }
-  }, 300);
+  const debouncedFilterChange = useDebounce(
+    (newListingType: "auction" | "fixed-price" | undefined) => {
+      if (newListingType !== listingType) {
+        setListingType(newListingType);
+      }
+    },
+    300
+  );
 
-  const handleFilterChange = useCallback((newListingType: "auction" | "fixed-price" | undefined) => {
-    debouncedFilterChange(newListingType);
-  }, [debouncedFilterChange]);
+  const handleFilterChange = useCallback(
+    (newListingType: "auction" | "fixed-price" | undefined) => {
+      debouncedFilterChange(newListingType);
+    },
+    [debouncedFilterChange]
+  );
 
   // Handle retry with optional refresh
   const handleRetry = useCallback(() => {
@@ -95,7 +109,7 @@ export default function HomePage() {
           <div className="px-4 pt-4 space-y-4">
             <SearchBar />
             <FilterTabs />
-            <ErrorState 
+            <ErrorState
               error={error as Error}
               onRetry={handleRetry}
               title="Failed to load listings"
@@ -119,34 +133,43 @@ export default function HomePage() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">
-                {listingType === "auction" ? "Auctions" :
-                 listingType === "fixed-price" ? "Fixed Price" : "All"}
+                {listingType === "auction"
+                  ? "Auctions"
+                  : listingType === "fixed-price"
+                  ? "Fixed Price"
+                  : "All"}
                 {isRefetching && (
                   <span className="ml-2 text-xs text-muted-foreground">(refreshing...)</span>
                 )}
               </h2>
               {allListings.length > 0 && (
                 <span className="text-sm text-muted-foreground">
-                  {allListings.length} listing{allListings.length !== 1 ? 's' : ''}
+                  {allListings.length} listing{allListings.length !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
-            
+
             {allListings.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="text-muted-foreground space-y-3">
                   <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                      />
                     </svg>
                   </div>
                   <div>
                     <p className="text-lg font-medium">No listings found</p>
                     <p className="text-sm mt-1">
-                      {listingType ? 
-                        `No ${listingType === "auction" ? "auctions" : "fixed-price listings"} are available right now.` :
-                        "No listings are available right now."
-                      }
+                      {listingType
+                        ? `No ${
+                            listingType === "auction" ? "auctions" : "fixed-price listings"
+                          } are available right now.`
+                        : "No listings are available right now."}
                     </p>
                     <p className="text-xs mt-2 text-muted-foreground/80">
                       Check back later or try a different filter.
@@ -159,28 +182,31 @@ export default function HomePage() {
                 {allListings.map((listing, index) => {
                   try {
                     return (
-                      <FeaturedCard 
-                        key={`${listing.listingId}-${listing.listingType}-${index}`} 
-                        listing={listing} 
+                      <FeaturedCard
+                        key={`${listing.listingId}-${listing.listingType}-${index}`}
+                        listing={listing}
                       />
                     );
                   } catch (error) {
                     console.error(`Error rendering listing ${listing.listingId}:`, error);
                     return (
-                      <div key={`error-${listing.listingId}-${index}`} className="p-4 bg-muted/50 rounded-lg">
+                      <div
+                        key={`error-${listing.listingId}-${index}`}
+                        className="p-4 bg-muted/50 rounded-lg"
+                      >
                         <p className="text-sm text-muted-foreground">Failed to load listing</p>
                       </div>
                     );
                   }
                 })}
-                
+
                 {/* Infinite scroll trigger */}
                 {hasNextPage && (
                   <div ref={observerRef} className="h-20 flex items-center justify-center">
                     {isFetchingNextPage && <InlineLoader />}
                   </div>
                 )}
-                
+
                 {/* End of results indicator */}
                 {!hasNextPage && allListings.length > 0 && (
                   <div className="flex items-center justify-center py-8">

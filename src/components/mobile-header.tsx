@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import sdk from "@farcaster/miniapp-sdk";
 import { MiniAppContext } from "@farcaster/miniapp-core/dist/context";
-import { useAccount, useConnect } from "wagmi";
-import farcasterMiniApp from "@farcaster/miniapp-wagmi-connector";
+import { useAccount } from "wagmi";
 import { truncateAddress } from "@/lib/truncateAddress";
 
 export function MobileHeader() {
@@ -19,12 +18,7 @@ export function MobileHeader() {
     waitForContext();
   }, []);
 
-  const { address: userAddressData, isConnected, isConnecting } = useAccount();
-  const { connect } = useConnect();
-
-  if (!isConnected && !isConnecting) {
-    connect({ connector: farcasterMiniApp() });
-  }
+  const { address: userAddressData } = useAccount();
 
   return (
     <div className="flex items-center justify-between px-4 py-4">

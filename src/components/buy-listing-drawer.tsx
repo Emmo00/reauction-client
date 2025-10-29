@@ -67,6 +67,14 @@ export function BuyListingDrawer({
   tokenId,
   onSuccess,
 }: BuyListingDrawerProps) {
+  // Debug logging
+  console.log("BuyListingDrawer rendered with props:", {
+    isOpen,
+    listingId,
+    price,
+    tokenId,
+  });
+
   const [currentStep, setCurrentStep] = useState<TransactionStep>(1);
   const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
@@ -202,38 +210,53 @@ export function BuyListingDrawer({
   const handleApproveUSDC = async () => {
     try {
       setError(null);
+      console.log("Starting approval process...");
 
-      await connectAsync({ connector: farcasterMiniApp() });
-      console.log("STILL NOT CONNECTED??", isConnected);
+      // await connectAsync({ connector: farcasterMiniApp() });
+      console.log("Connection status:", { isConnected, address, isConnecting });
 
-      console.log("Connected address:", isConnected, address, isConnecting);
+      // Wait a bit for connection state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Check for insufficient funds
       if (hasInsufficientFunds) {
-        setError(
-          `Insufficient USDC balance. You need ${unitsToUSDC(
-            price
-          )} USDC but only have ${parseFloat(formattedBalance).toFixed(2)} USDC.`
-        );
+        const errorMsg = `Insufficient USDC balance. You need ${unitsToUSDC(
+          price
+        )} USDC but only have ${parseFloat(formattedBalance).toFixed(2)} USDC.`;
+        console.error("Insufficient funds:", errorMsg);
+        setError(errorMsg);
         return;
       }
 
       const usdcAddress = getUSDCContractAddress();
       const auctionAddress = getAuctionContractAddress();
+      const chain = getChain();
+
+      console.log("Contract addresses:", { usdcAddress, auctionAddress, chainId: chain.id });
+      console.log("Approval params:", {
+        price,
+        priceAsBigInt: BigInt(price),
+        account: address,
+      });
+
+      if (!address) {
+        throw new Error("No wallet address available");
+      }
+
+      if (!usdcAddress || !auctionAddress) {
+        throw new Error("Contract addresses not available");
+      }
 
       writeApproval({
         address: usdcAddress as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [auctionAddress as `0x${string}`, BigInt(price)],
-        chain: getChain(),
-        account: address,
-        chainId: getChain().id,
       });
 
-      console.log("Approval transaction sent");
+      console.log("Approval transaction sent successfully");
     } catch (e) {
-      console.error("Error approving USDC:", e);
+      console.error("Error in handleApproveUSDC:", e);
       setError(getErrorMessage(e));
     }
   };
@@ -254,19 +277,38 @@ export function BuyListingDrawer({
 
   const isLoading = isApprovalPending || isApprovalConfirming || isBuyPending || isBuyConfirming;
 
-  return (
-    <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerContent className="bg-background border-white/10">
-        <DrawerHeader className="text-center">
-          <DrawerTitle className="text-xl font-semibold text-foreground">
-            {currentStep === 3 ? "Purchase Successful!" : "Complete Purchase"}
-          </DrawerTitle>
-          <DrawerDescription className="text-muted-foreground hidden">
-            {currentStep === 3
-              ? "Your collectible purchase has been completed"
-              : `Purchase collectible for ${unitsToUSDC(price)} USDC`}
-          </DrawerDescription>
-        </DrawerHeader>
+  // Add defensive checks to prevent crashes
+  if (!price || price === "0") {
+    console.error("Invalid price provided to BuyListingDrawer:", price);
+    return null;
+  }
+
+  try {
+    // Test if price conversion works
+    const testPrice = unitsToUSDC(price);
+    if (!testPrice || testPrice === "NaN") {
+      console.error("Price conversion failed:", price);
+      return null;
+    }
+  } catch (e) {
+    console.error("Error converting price:", e);
+    return null;
+  }
+
+  try {
+    return (
+      <Drawer open={isOpen} onOpenChange={handleClose}>
+        <DrawerContent className="bg-background border-white/10">
+          <DrawerHeader className="text-center">
+            <DrawerTitle className="text-xl font-semibold text-foreground">
+              {currentStep === 3 ? "Purchase Successful!" : "Complete Purchase"}
+            </DrawerTitle>
+            <DrawerDescription className="text-muted-foreground hidden">
+              {currentStep === 3
+                ? "Your collectible purchase has been completed"
+                : `Purchase collectible for ${unitsToUSDC(price || "0")} USDC`}
+            </DrawerDescription>
+          </DrawerHeader>
 
         <div className="px-6 pb-6">
           {/* Transaction Steps */}
@@ -472,5 +514,31 @@ export function BuyListingDrawer({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  );
+    );
+  } catch (error) {
+    console.error("Error rendering BuyListingDrawer:", error);
+    return (
+      <Drawer open={isOpen} onOpenChange={handleClose}>
+        <DrawerContent className="bg-background border-white/10">
+          <DrawerHeader className="text-center">
+            <DrawerTitle className="text-xl font-semibold text-foreground">
+              Error
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="px-6 pb-6">
+            <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4">
+              <p className="text-sm text-red-400">
+                An error occurred while loading the purchase dialog. Please try again.
+              </p>
+            </div>
+          </div>
+          <DrawerFooter>
+            <Button onClick={handleClose} variant="outline" className="w-full h-12 rounded-full">
+              Close
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 }
