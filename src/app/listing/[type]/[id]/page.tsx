@@ -619,6 +619,7 @@ export default function ListingPage() {
           listingId={id}
           price={listing.price || "0"}
           tokenId={listing.cast?.cast.hash || ""}
+          listingCreatorUsername={listing.cast?.cast.author.username || ""}
         />
       )}
     </>

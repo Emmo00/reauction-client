@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Loader2, DollarSign, ShoppingCart, Wallet } from "lucide-react";
+import { Check, X, Loader2, DollarSign, ShoppingCart, Wallet, Share, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -26,6 +26,8 @@ import { unitsToUSDC } from "@/lib/utils";
 import { parseUnits, formatUnits } from "viem";
 import { syncListings } from "@/lib/api/sync";
 import { useQueryClient } from "@tanstack/react-query";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { useRouter } from "next/navigation";
 
 // Standard ERC20 ABI for approve and balanceOf functions
 const ERC20_ABI = [
@@ -54,7 +56,7 @@ interface BuyListingDrawerProps {
   listingId: string;
   price: string;
   tokenId: string;
-  onSuccess?: (transactionHash: string) => void;
+  listingCreatorUsername?: string;
 }
 
 type TransactionStep = 1 | 2 | 3; // 1: Approve USDC, 2: Buy Listing, 3: Success
@@ -65,11 +67,14 @@ export function BuyListingDrawer({
   listingId,
   price,
   tokenId,
+  listingCreatorUsername,
 }: BuyListingDrawerProps) {
   const [currentStep, setCurrentStep] = useState<TransactionStep>(3);
   const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const { isConnected, address, isConnecting } = useAccount();
   const { connectAsync, connect, connectors } = useConnect();
@@ -257,6 +262,24 @@ export function BuyListingDrawer({
     setBuyTxHash(null);
     setError(null);
     onClose();
+  };
+
+  const handleSharePurchase = async () => {
+    try {
+      const currentUrl = window.location.href;
+      const shareText = `Just bought @${listingCreatorUsername} cast on Reauction! 🎉\n\nCheck it out:`;
+
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: [currentUrl],
+      });
+    } catch (error) {
+      console.error("Error sharing purchase:", error);
+    }
+  };
+
+  const handleGoToProfile = () => {
+    router.push(`/profile`);
   };
 
   const getStepStatus = (step: TransactionStep) => {
@@ -506,7 +529,25 @@ export function BuyListingDrawer({
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={handleSharePurchase}
+                    variant="outline"
+                    className="h-12 rounded-full bg-muted border-primary/20 hover:border-primary/40"
+                  >
+                    <Share className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button
+                    onClick={handleGoToProfile}
+                    variant="outline"
+                    className="h-12 rounded-full bg-muted border-primary/20 hover:border-primary/40"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Go to Profile
+                  </Button>
+                </div>
                 <Button
                   onClick={handleClose}
                   className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold"
