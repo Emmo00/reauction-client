@@ -9,7 +9,6 @@
       { "name": "minDuration", "type": "uint32", "internalType": "uint32" },
       { "name": "maxDuration", "type": "uint32", "internalType": "uint32" },
       { "name": "extension", "type": "uint32", "internalType": "uint32" },
-      { "name": "maxExtension", "type": "uint256", "internalType": "uint256" },
       { "name": "extensionThreshold", "type": "uint32", "internalType": "uint32" },
       { "name": "protocolFeeBps", "type": "uint16", "internalType": "uint16" }
     ],
@@ -33,7 +32,6 @@
       { "name": "highestBid", "type": "uint256", "internalType": "uint256" },
       { "name": "endTime", "type": "uint256", "internalType": "uint256" },
       { "name": "bids", "type": "uint32", "internalType": "uint32" },
-      { "name": "extension", "type": "uint256", "internalType": "uint256" },
       { "name": "protocolFeeBps", "type": "uint16", "internalType": "uint16" },
       { "name": "state", "type": "uint8", "internalType": "enum IAuction.AuctionState" }
     ],
@@ -120,7 +118,6 @@
           { "name": "highestBid", "type": "uint256", "internalType": "uint256" },
           { "name": "endTime", "type": "uint256", "internalType": "uint256" },
           { "name": "bids", "type": "uint32", "internalType": "uint32" },
-          { "name": "extension", "type": "uint256", "internalType": "uint256" },
           { "name": "protocolFeeBps", "type": "uint16", "internalType": "uint16" },
           { "name": "state", "type": "uint8", "internalType": "enum IAuction.AuctionState" }
         ]
@@ -295,7 +292,6 @@
           { "name": "minDuration", "type": "uint32", "internalType": "uint32" },
           { "name": "maxDuration", "type": "uint32", "internalType": "uint32" },
           { "name": "extension", "type": "uint32", "internalType": "uint32" },
-          { "name": "maxExtension", "type": "uint256", "internalType": "uint256" },
           { "name": "extensionThreshold", "type": "uint32", "internalType": "uint32" },
           { "name": "protocolFeeBps", "type": "uint16", "internalType": "uint16" }
         ]
@@ -405,7 +401,6 @@
           { "name": "minDuration", "type": "uint32", "internalType": "uint32" },
           { "name": "maxDuration", "type": "uint32", "internalType": "uint32" },
           { "name": "extension", "type": "uint32", "internalType": "uint32" },
-          { "name": "maxExtension", "type": "uint256", "internalType": "uint256" },
           { "name": "extensionThreshold", "type": "uint32", "internalType": "uint32" },
           { "name": "protocolFeeBps", "type": "uint16", "internalType": "uint16" }
         ]
@@ -418,6 +413,7 @@
     "name": "AuctionExtended",
     "inputs": [
       { "name": "auctionId", "type": "uint256", "indexed": true, "internalType": "uint256" },
+      { "name": "extension", "type": "uint256", "indexed": false, "internalType": "uint256" },
       { "name": "newEndTime", "type": "uint256", "indexed": false, "internalType": "uint256" }
     ],
     "anonymous": false

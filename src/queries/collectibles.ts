@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { CollectibleStatusAPI, collectibleStatusQueryKeys } from "@/lib/api/collectible-status";
+import { CollectiblesAPI, collectibleStatusQueryKeys } from "@/lib/api/collectibles";
 import { CollectibleStatus } from "@/types";
 
 export function useCollectibleStatus(address?: string) {
@@ -9,8 +9,8 @@ export function useCollectibleStatus(address?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: collectibleStatusQueryKeys.byAddress(address || ""),
-    queryFn: () => CollectibleStatusAPI.getCollectibleStatus(address!),
+    queryKey: collectibleStatusQueryKeys.status(address || ""),
+    queryFn: () => CollectiblesAPI.getCollectibleStatus(address!),
     enabled: !!address, // Only run query if we have an address
     staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes

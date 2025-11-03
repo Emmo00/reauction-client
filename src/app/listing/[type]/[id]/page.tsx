@@ -614,7 +614,7 @@ export default function ListingPage() {
       {/* Buy Listing Drawer */}
       {type === "fixed-price" && listing && (
         <BuyListingDrawer
-          isOpen={true || isBuyDrawerOpen}
+          isOpen={isBuyDrawerOpen}
           onClose={() => setIsBuyDrawerOpen(false)}
           listingId={id}
           price={listing.price || "0"}

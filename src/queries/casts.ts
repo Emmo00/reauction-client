@@ -1,4 +1,5 @@
-import { OwnedCollectibles, OwnedCollectiblesResponse } from "@/types";
+import { CollectiblesAPI, collectibleStatusQueryKeys } from "@/lib/api/collectibles";
+import { OwnedCollectiblesResponse } from "@/types";
 import { CastResponse } from "@neynar/nodejs-sdk/build/api";
 import { useQuery } from "@tanstack/react-query";
 
@@ -13,13 +14,9 @@ export function useOwnedCollectibles({
 }) {
   return useQuery<OwnedCollectiblesResponse>({
     enabled: !!address,
-    queryKey: ["ownedCollectibles", address, page, perPage],
+    queryKey: collectibleStatusQueryKeys.owned(address!, page!, perPage!),  
     queryFn: async () => {
-      const response = await fetch(
-        `/api/collectibles/owned/${address}?page=${page}&perPage=${perPage}`
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return response.json();
+      return CollectiblesAPI.getCollectiblesOwnedByAddress(address!, page, perPage);
     },
   });
 }

@@ -69,7 +69,7 @@ export function BuyListingDrawer({
   tokenId,
   listingCreatorUsername,
 }: BuyListingDrawerProps) {
-  const [currentStep, setCurrentStep] = useState<TransactionStep>(3);
+  const [currentStep, setCurrentStep] = useState<TransactionStep>(1);
   const [approvalTxHash, setApprovalTxHash] = useState<string | null>(null);
   const [buyTxHash, setBuyTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -545,7 +545,7 @@ export function BuyListingDrawer({
                     className="h-12 rounded-full bg-muted border-primary/20 hover:border-primary/40"
                   >
                     <User className="h-4 w-4 mr-2" />
-                    Go to Profile
+                    Profile
                   </Button>
                 </div>
                 <Button

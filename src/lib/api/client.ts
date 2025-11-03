@@ -76,9 +76,10 @@ export class APIClient {
  * Query key factory for consistent cache keys
  */
 export const queryKeys = {
-  collectibleStatus: {
-    all: ['collectible-status'] as const,
-    byAddress: (address: string) => [...queryKeys.collectibleStatus.all, address] as const,
+  collectibles: {
+    all: ['collectibles'] as const,
+    status: (address: string) => [...queryKeys.collectibles.all, address] as const,
+    owned: (address: string, page: number, perPage: number) => [...queryKeys.collectibles.all, address, page, perPage] as const,
   },
   farcasterAddress: {
     all: ['farcaster-address'] as const,
