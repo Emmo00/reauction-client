@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNav } from "@/components/bottom-nav";
 import { BuyListingDrawer } from "@/components/buy-listing-drawer";
+import { MoreOptions } from "@/components/more-options";
+import { AdminActionDrawer } from "@/components/admin-action-drawer";
 import { useListing } from "@/queries/listing";
 import { CollectibleImage } from "@/components/collectible-image";
 import { useFarcasterUserByAddress } from "@/queries/users";
@@ -16,10 +18,12 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { useParams, useRouter } from "next/navigation";
 import { unitsToUSDC } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useAccount } from "wagmi";
 
 export default function ListingPage() {
   const params = useParams();
   const router = useRouter();
+  const { address } = useAccount();
   const type = params.type as "auction" | "fixed-price";
   const id = params.id as string;
   const { data: listing, error, isLoading } = useListing({ id, type });
@@ -27,6 +31,15 @@ export default function ListingPage() {
   
   // State for buy listing drawer
   const [isBuyDrawerOpen, setIsBuyDrawerOpen] = useState(false);
+  
+  // State for admin action drawer
+  const [adminAction, setAdminAction] = useState<{
+    isOpen: boolean;
+    action: "cancelListing" | "cancelAuction" | "settleAuction" | null;
+  }>({
+    isOpen: false,
+    action: null,
+  });
   
   // Ref for tabs content to enable scrolling
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -103,6 +116,34 @@ export default function ListingPage() {
       console.log("Place bid for auction");
     }
   };
+
+  // Admin action handlers
+  const handleCancelListing = () => {
+    setAdminAction({ isOpen: true, action: "cancelListing" });
+  };
+
+  const handleCancelAuction = () => {
+    setAdminAction({ isOpen: true, action: "cancelAuction" });
+  };
+
+  const handleSettleAuction = () => {
+    setAdminAction({ isOpen: true, action: "settleAuction" });
+  };
+
+  const handleAdminActionClose = () => {
+    setAdminAction({ isOpen: false, action: null });
+  };
+
+  const handleAdminActionSuccess = () => {
+    // Optionally refetch listing data or redirect
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  };
+
+  // Check if current user is the creator
+  const isCreator = address && listing?.creator && 
+    address.toLowerCase() === listing.creator.toLowerCase();
 
   // Type guard to check if owner data is valid (not error)
   const hasValidOwnerData = (
@@ -304,6 +345,19 @@ export default function ListingPage() {
               <span className="ml-2">→</span>
             </Button>
           )}
+
+          {/* More Options for Creator */}
+          <MoreOptions
+            listingType={type}
+            itemId={id}
+            isCreator={!!isCreator}
+            listingStatus={listing.listingStatus}
+            auctionEndTime={listing.auctionEndTime}
+            onCancelListing={handleCancelListing}
+            onCancelAuction={handleCancelAuction}
+            onSettleAuction={handleSettleAuction}
+          />
+
           <Tabs defaultValue="details" className="w-full" onValueChange={handleTabChange} ref={tabsRef}>
             <TabsList className={`grid w-full ${type === "fixed-price" ? "grid-cols-3" : "grid-cols-4"} bg-card`}>
               <TabsTrigger value="details">Details</TabsTrigger>
@@ -620,6 +674,18 @@ export default function ListingPage() {
           price={listing.price || "0"}
           tokenId={listing.cast?.cast.hash || ""}
           listingCreatorUsername={listing.cast?.cast.author.username || ""}
+        />
+      )}
+
+      {/* Admin Action Drawer */}
+      {adminAction.action && (
+        <AdminActionDrawer
+          isOpen={adminAction.isOpen}
+          onClose={handleAdminActionClose}
+          action={adminAction.action}
+          itemId={id}
+          itemType={type}
+          onSuccess={handleAdminActionSuccess}
         />
       )}
     </>
