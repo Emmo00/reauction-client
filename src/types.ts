@@ -177,3 +177,9 @@ export enum ListingState {
   Purchased = 2,
   Cancelled = 3,
 }
+
+export interface Waitlist {
+  fid: string;
+  username: string;
+  allowed: boolean;
+}
