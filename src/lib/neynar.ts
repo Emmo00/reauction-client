@@ -35,7 +35,7 @@ export async function sendNeynarMiniAppNotification({
   fid,
   title,
   body,
-  targetUrl = APP_URL,
+  targetUrl = "https://reauction.xyz",
 }: {
   fid: number;
   title: string;
