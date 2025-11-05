@@ -65,6 +65,8 @@ export async function sendNeynarMiniAppNotification({
       notification,
     });
 
+    console.log("Neynar mini app notification result:", result);
+
     if (result.notification_deliveries.length > 0) {
       return { state: "success" };
     } else if (result.notification_deliveries.length === 0) {
