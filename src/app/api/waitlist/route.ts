@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     console.log(`Added user ${username} (fid: ${fid}) to waitlist`);
 
     // send notification to the user
-    sendNeynarMiniAppNotification({
+    await sendNeynarMiniAppNotification({
       fid: parseInt(fid, 10),
       title: "You’re on the Reauction Waitlist!",
       body: `Hello ${username}, you have been added to the waitlist!`,

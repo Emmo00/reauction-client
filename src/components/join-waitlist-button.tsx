@@ -24,11 +24,6 @@ export default function JoinWaitlistButton({
   const handleJoinWaitlist = async () => {
     setIsLoading(true);
 
-    // wait 2 seconds
-    console.log('before wait');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log('after wait');
-    
     try {
       const addMiniAppResult = await addMiniApp();
 
