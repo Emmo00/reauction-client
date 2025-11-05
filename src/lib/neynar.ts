@@ -58,11 +58,13 @@ export async function sendNeynarMiniAppNotification({
       title,
       body,
       target_url: targetUrl,
+      uuid: `reauction-waitlist-${fid}`,
     };
 
     const result = await client.publishFrameNotifications({
-      targetFids,
       notification,
+      targetFids,
+      filters: {},
     });
 
     console.log("Neynar mini app notification result:", result);
