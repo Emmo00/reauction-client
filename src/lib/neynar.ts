@@ -75,8 +75,6 @@ export async function sendNeynarMiniAppNotification({
     console.log("Sending notification with payload:", {
       notification,
       targetFids,
-      filters: {},
-      apiKey: process.env.NEYNAR_API_KEY,
     });
 
     const result = await client.publishFrameNotifications({
