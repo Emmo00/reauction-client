@@ -23,8 +23,7 @@ const WaitlistSchema = new Schema<Waitlist & Document>(
 );
 
 // Create index for efficient queries
-WaitlistSchema.index({ fid: 1 });
-WaitlistSchema.index({ allowed: 1 });
+WaitlistSchema.index({ fid: 1, allowed: 1 });
 
 const WaitlistModel = mongoose.models.Waitlist || mongoose.model<Waitlist>("Waitlist", WaitlistSchema);
 
