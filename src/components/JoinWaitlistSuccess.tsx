@@ -27,6 +27,7 @@ export default function JoinWaitlistSuccess() {
     composeCast({
       text: randomText,
       embeds: ["https://reauction.xyz"],
+      channelKey: "reauction",
     });
   };
 

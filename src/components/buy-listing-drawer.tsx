@@ -272,6 +272,7 @@ export function BuyListingDrawer({
       await sdk.actions.composeCast({
         text: shareText,
         embeds: [currentUrl],
+        channelKey: "reauction",
       });
     } catch (error) {
       console.error("Error sharing purchase:", error);
