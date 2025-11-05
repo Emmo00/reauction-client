@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     // send notification to the user
     const notResult = await sendNeynarMiniAppNotification({
       fid: parseInt(fid, 10),
-      title: "You're on the Reauction Waitlist!", // 32 chars max
+      title: "You're In!", // 32 chars max
       body: `Hello ${username}, you're now on our waitlist!`, // 128 chars max
     });
 
