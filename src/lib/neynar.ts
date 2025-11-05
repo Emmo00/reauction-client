@@ -44,13 +44,40 @@ export async function sendNeynarMiniAppNotification({
 }): Promise<any> {
   try {
     const client = getNeynarClient();
+
+    // Validate title length (1-32 characters)
+    if (!title || title.length === 0 || title.length > 32) {
+      throw new Error(
+        `Title must be between 1 and 32 characters. Current length: ${title?.length}`
+      );
+    }
+
+    // Validate body length (1-128 characters)
+    if (!body || body.length === 0 || body.length > 128) {
+      throw new Error(`Body must be between 1 and 128 characters. Current length: ${body?.length}`);
+    }
+
+    // Validate URL format
+    try {
+      new URL(targetUrl);
+    } catch {
+      throw new Error(`Invalid target URL: ${targetUrl}`);
+    }
+
     const targetFids = [fid];
     const notification = {
-      title,
-      body,
+      title: title.trim(),
+      body: body.trim(),
       target_url: targetUrl,
-      uuid: `reauction-waitlist-${fid}`,
+      uuid: `reauction-waitlist-${fid}-${Date.now()}`, // Make UUID unique
     };
+
+    console.log("Sending notification with payload:", {
+      notification,
+      targetFids,
+      filters: {},
+      apiKey: process.env.NEYNAR_API_KEY,
+    });
 
     const result = await client.publishFrameNotifications({
       notification,
@@ -62,6 +89,7 @@ export async function sendNeynarMiniAppNotification({
 
     return result;
   } catch (error) {
+    console.error("Error sending Neynar notification:", error);
     return { state: "error", error };
   }
 }
