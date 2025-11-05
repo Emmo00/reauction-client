@@ -31,15 +31,6 @@ export async function getNeynarUser(fid: number): Promise<User | null> {
   }
 }
 
-type SendMiniAppNotificationResult =
-  | {
-      state: "error";
-      error: unknown;
-    }
-  | { state: "no_token" }
-  | { state: "rate_limit" }
-  | { state: "success" };
-
 export async function sendNeynarMiniAppNotification({
   fid,
   title,
@@ -50,7 +41,7 @@ export async function sendNeynarMiniAppNotification({
   title: string;
   body: string;
   targetUrl?: string;
-}): Promise<SendMiniAppNotificationResult> {
+}): Promise<any> {
   try {
     const client = getNeynarClient();
     const targetFids = [fid];
@@ -69,13 +60,7 @@ export async function sendNeynarMiniAppNotification({
 
     console.log("Neynar mini app notification result:", result);
 
-    if (result.notification_deliveries.length > 0) {
-      return { state: "success" };
-    } else if (result.notification_deliveries.length === 0) {
-      return { state: "no_token" };
-    } else {
-      return { state: "error", error: result || "Unknown error" };
-    }
+    return result;
   } catch (error) {
     return { state: "error", error };
   }
