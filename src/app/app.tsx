@@ -2,17 +2,29 @@
 
 import FaultyTerminal from "@/components/FaultyTerminal";
 import MiniAppRequired from "@/components/MiniAppRequired";
+import JoinWaitlistButton from "@/components/join-waitlist-button";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { useRouter } from "next/navigation";
 import { useMiniApp } from "@neynar/react";
+import JoinWaitlistSuccess from "@/components/JoinWaitlistSuccess";
+import JoinWaitlistFailed from "@/components/JoinWaitlistFailed";
 
 export default function App() {
   const [showMiniAppRequired, setShowMiniAppRequired] = useState(false);
+  const [joinWaitlistSuccess, setJoinWaitlistSuccess] = useState(false);
+  const [joinWaitlistFailed, setJoinWaitlistFailed] = useState(false);
+  const [joinWaitlistErrorMessage, setJoinWaitlistErrorMessage] = useState<string | undefined>(
+    undefined
+  );
+  const [retryJoinWaitlist, setRetryJoinWaitlist] = useState<() => void>(() => {});
+  const [isRetryingJoinWaitlist, setIsRetryingJoinWaitlist] = useState(false);
+
   const { isInMiniApp } = useMiniApp();
   const router = useRouter();
+  const isPreLaunch = process.env.NEXT_PUBLIC_PRE_LAUNCH === "true";
 
   useEffect(() => {
     console.log("before ready");
@@ -30,6 +42,20 @@ export default function App() {
 
   if (showMiniAppRequired) {
     return <MiniAppRequired />;
+  }
+
+  if (joinWaitlistSuccess) {
+    return <JoinWaitlistSuccess />;
+  }
+
+  if (joinWaitlistFailed) {
+    return (
+      <JoinWaitlistFailed
+        errorMessage={joinWaitlistErrorMessage}
+        onRetry={retryJoinWaitlist}
+        isRetrying={isRetryingJoinWaitlist}
+      />
+    );
   }
 
   return (
@@ -74,15 +100,27 @@ export default function App() {
             NFTs.
           </p>
 
-          <Button
-            size="lg"
-            className="h-12 rounded-full px-8 text-base font-semibold"
-            onClick={handleGetStarted}
-          >
-            Get Started <ChevronRight className="ml-2 h-4 w-4" />
-            <ChevronRight className="h-4 w-4 -ml-2" />
-            <ChevronRight className="h-4 w-4 -ml-2" />
-          </Button>
+          {isPreLaunch ? (
+            <JoinWaitlistButton
+              setJoinWaitlistSuccess={() => setJoinWaitlistSuccess(true)}
+              setJoinWaitlistFailed={(error, onRetry, isRetrying) => {
+                setJoinWaitlistErrorMessage(error);
+                setRetryJoinWaitlist(() => onRetry);
+                setIsRetryingJoinWaitlist(isRetrying);
+                setJoinWaitlistFailed(true);
+              }}
+            />
+          ) : (
+            <Button
+              size="lg"
+              className="h-12 rounded-full px-8 text-base font-semibold"
+              onClick={handleGetStarted}
+            >
+              Get Started <ChevronRight className="ml-2 h-4 w-4" />
+              <ChevronRight className="h-4 w-4 -ml-2" />
+              <ChevronRight className="h-4 w-4 -ml-2" />
+            </Button>
+          )}
         </div>
       </main>
     </>

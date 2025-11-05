@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { useState } from "react"
+import { useState } from "react";
 
 const filters = ["All", "Auctions", "Buy Now", "Trending", "Following"]
 

@@ -44,10 +44,12 @@ export async function sendNeynarMiniAppNotification({
   fid,
   title,
   body,
+  targetUrl = APP_URL,
 }: {
   fid: number;
   title: string;
   body: string;
+  targetUrl?: string;
 }): Promise<SendMiniAppNotificationResult> {
   try {
     const client = getNeynarClient();
@@ -55,7 +57,7 @@ export async function sendNeynarMiniAppNotification({
     const notification = {
       title,
       body,
-      target_url: APP_URL,
+      target_url: targetUrl,
     };
 
     const result = await client.publishFrameNotifications({
@@ -80,7 +82,7 @@ export async function getFarcasterCastByHash(castHash: string) {
     const client = getNeynarClient();
 
     console.log("Fetching Farcaster cast for hash:", castHash);
-    
+
     const cast = await client.lookupCastByHashOrUrl({
       identifier: castHash,
       type: "hash",

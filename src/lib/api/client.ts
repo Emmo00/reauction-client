@@ -92,4 +92,12 @@ export const queryKeys = {
     infinite: ({ limit, listingType }: { limit: number; listingType?: "auction" | "fixed-price" }) => [...queryKeys.listings.all, 'infinite', { limit, listingType }] as const,
     byId: ({ id, type }: { id: string; type: "auction" | "fixed-price" }) => [...queryKeys.listings.all, 'detail', { id, type }] as const,
   },
+  waitlist: {
+    all: ['waitlist'] as const,
+    records: () => [...queryKeys.waitlist.all, 'records'] as const,
+    count: () => [...queryKeys.waitlist.all, 'count'] as const,
+    allowedCount: () => [...queryKeys.waitlist.all, 'allowed-count'] as const,
+    notAllowedCount: () => [...queryKeys.waitlist.all, 'not-allowed-count'] as const,
+    stats: () => [...queryKeys.waitlist.all, 'stats'] as const,
+  },
 } as const;
