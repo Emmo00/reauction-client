@@ -5,7 +5,7 @@ import connectToDatabase from "@/lib/mongodb";
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
-    
+
     const { searchParams } = req.nextUrl;
     const limitParam = searchParams.get("limit");
     const pageParam = searchParams.get("page");

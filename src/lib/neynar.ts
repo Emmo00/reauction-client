@@ -69,7 +69,6 @@ export async function sendNeynarMiniAppNotification({
       title: title.trim(),
       body: body.trim(),
       target_url: targetUrl,
-      uuid: `reauction-waitlist-${fid}-${Date.now()}`, // Make UUID unique
     };
 
     console.log("Sending notification with payload:", {
@@ -87,8 +86,10 @@ export async function sendNeynarMiniAppNotification({
 
     return result;
   } catch (error) {
+    // Safely handle unknown error types and optional response payloads
+    const resp = (error as any)?.response?.data ?? (error instanceof Error ? error.message : String(error));
     console.error("Error sending Neynar notification:", error);
-    return { state: "error", error };
+    return { state: "error", response: resp };
   }
 }
 
@@ -125,7 +126,23 @@ export async function getFarcasterUserByWalletAddress(address: string) {
       return null;
     }
   } catch (error) {
-    console.error("Error fetching Farcaster user by wallet address:", error);
+    const errorMessage = (error as any)?.response?.data ?? (error instanceof Error ? error.message : String(error));
+    console.error("Error fetching Farcaster user by wallet address:", errorMessage);
+    console.log("error details:", error);
     return null;
+  }
+}
+
+export async function getNotificationTokens() {
+  try {
+  const client = getNeynarClient();
+
+  const tokens = await client.fetchNotificationTokens({limit: 100});
+
+    return tokens;
+  } catch (error) {
+    console.error("Error fetching notification tokens:", error);
+    console.log("error details:", (error as any)?.response);
+    return [];
   }
 }
